@@ -40,7 +40,7 @@ public class App {
             c.start();
             
         } catch (Exception e) {
-            System.out.println("Erro capturado"); 
+            System.out.println("Erro capaturado"); 
         }
     }
             
