@@ -22,7 +22,7 @@ public class MainFrameController {
     private MainFrame mainFrame;
 
     public MainFrameController() {
-        //createWorld();
+        createWorld();
         mainFrame = new MainFrame();
         setupFrame();
     }
@@ -37,18 +37,21 @@ public class MainFrameController {
         mainFrame.CreateCreatureButton.addActionListener((ActionEvent e) -> {
             createNewCreature_ButtonClick();
         });
-        
+
         mainFrame.setVisible(true);
     }
 
     private void createNewCreature_ButtonClick() {
         CreateCreatureFrameController controller = new CreateCreatureFrameController(200, 200, this);
     }
-    
-    public void createNewCreature(double coordinateX, double coordinateY){
+
+    public void createNewCreature(double coordinateX, double coordinateY) {
         try {
             Creature c = proxy.createCreature(coordinateX, coordinateY, 0);
             listCreatures.add(c);
+            mainFrame.CreatureList.addItem(c.getName());
+            c.start();
+
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(null,
                     "Não foi possível criar a criatura.",
@@ -72,7 +75,6 @@ public class MainFrameController {
             World.createJewel(0, 10, 50);
             World.createJewel(1, 100, 500);
             World.createBrick(3, 500, 200, 505, 300);
-            c = proxy.createCreature(100, 450, 0);
             c.start();
 
         } catch (Exception e) {

@@ -4,6 +4,8 @@
  */
 package WS3DApp;
 
+import ws3dproxy.model.Creature;
+
 /**
  *
  * @author root
@@ -34,8 +36,6 @@ public class MainFrame extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         CreateCreatureButton.setText("Criar criatura");
-
-        CreatureList.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         LabelIsCreaturesExists.setText("Ainda não há criaturas existentes. ");
 
