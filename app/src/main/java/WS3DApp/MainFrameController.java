@@ -1,7 +1,10 @@
 package WS3DApp;
 
+import WS3DApp.Controls.CreateBricksFrame;
+import WS3DApp.Controls.CreateBricksFrameController;
 import WS3DApp.Controls.CreateCreatureFrameController;
 import WS3DApp.Controls.CreateThingsFrameController;
+import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
 import ws3dproxy.model.Creature;
@@ -32,11 +35,6 @@ public class MainFrameController {
     }
 
     private void setupFrame() {
-        if (listCreatures.isEmpty()) {
-            mainFrame.LabelIsCreaturesExists.setVisible(true);
-        } else {
-            mainFrame.LabelIsCreaturesExists.setVisible(false);
-        }
 
         mainFrame.CreateCreatureButton.addActionListener((ActionEvent e) -> {
             createNewCreature_ButtonClick();
@@ -46,7 +44,23 @@ public class MainFrameController {
             createNewThing_ButtonClick();
         });
 
+        mainFrame.CreateBricksButton.addActionListener((ActionEvent e) -> {
+            createNewBrick_ButtonClick();
+        });
+
         mainFrame.setVisible(true);
+    }
+
+    private void createNewBrick_ButtonClick() {
+        CreateBricksFrameController controller = new CreateBricksFrameController(w.getEnvironmentWidth(), w.getEnvironmentHeight(), this);
+    }
+
+    public void createBrick(int type, double x1, double y1, double x2, double y2) {
+        try {
+            World.createBrick(type, x1, y1, x2, y2);
+        } catch (CommandExecException ex) {
+            Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private void createNewThing_ButtonClick() {

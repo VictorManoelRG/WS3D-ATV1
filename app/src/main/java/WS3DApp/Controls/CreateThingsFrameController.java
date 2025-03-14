@@ -8,6 +8,7 @@ import WS3DApp.MainFrameController;
 import java.awt.event.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 /**
@@ -21,23 +22,27 @@ public class CreateThingsFrameController {
     private static CreateThingsFrame createThingsFrame;
     private static final List<String> listCrystalColors = List.of("Vermelho", "Verde", "Azul", "Amarelo", "Magenta", "Branco");
     private static final List<String> fruitTypes = List.of("Perecível", "Não Perecível");
-    
+
     private double WorldLengthX;
     private double WorldLengthY;
 
     public CreateThingsFrameController(double lengthX, double lengthY, MainFrameController frameController) {
         mainFrameController = frameController;
-        createThingsFrame = new CreateThingsFrame();
         WorldLengthX = lengthX;
         WorldLengthY = lengthY;
         setupPage();
     }
 
     private void setupPage() {
+
+        createThingsFrame = new CreateThingsFrame();
+
+        createThingsFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
         for (String color : listCrystalColors) {
             createThingsFrame.ComboboxTypes.addItem(color);
         }
-        
+
         AtomicBoolean isUpdating = new AtomicBoolean(false);
 
         createThingsFrame.ComboboxThings.addItemListener(e -> {
@@ -66,18 +71,18 @@ public class CreateThingsFrameController {
                 isUpdating.set(false);
             }
         });
-        
+
         createThingsFrame.CreateThingButton.addActionListener((ActionEvent e) -> {
             double coordinateX = Double.parseDouble(createThingsFrame.CoordinateX.getText());
             double coordinateY = Double.parseDouble(createThingsFrame.CoordinateY.getText());
-            
+
             if (coordinateX < 0 || coordinateX > WorldLengthX || coordinateY < 0 || coordinateY > WorldLengthY) {
-            JOptionPane.showMessageDialog(null,
-                    "Coordenadas inválidas.",
-                    "Erro ao Criar Criatura",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+                JOptionPane.showMessageDialog(null,
+                        "Coordenadas inválidas.",
+                        "Erro ao Criar Criatura",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
 
             int type = createThingsFrame.ComboboxTypes.getSelectedIndex();
 
