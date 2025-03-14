@@ -1,13 +1,17 @@
 package WS3DApp;
 
 import WS3DApp.Controls.CreateCreatureFrameController;
+import WS3DApp.Controls.CreateThingsFrameController;
 import java.util.ArrayList;
 import java.util.List;
 import ws3dproxy.model.Creature;
 import java.awt.event.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import ws3dproxy.WS3DProxy;
 import ws3dproxy.model.World;
 import javax.swing.*;
+import ws3dproxy.CommandExecException;
 
 public class MainFrameController {
 
@@ -38,11 +42,35 @@ public class MainFrameController {
             createNewCreature_ButtonClick();
         });
 
+        mainFrame.CreateThingsButton.addActionListener((ActionEvent e) -> {
+            createNewThing_ButtonClick();
+        });
+
         mainFrame.setVisible(true);
     }
 
+    private void createNewThing_ButtonClick() {
+        CreateThingsFrameController controller = new CreateThingsFrameController(w.getEnvironmentWidth(), w.getEnvironmentHeight(), this);
+    }
+
+    public void createFood(int type, double coordinateX, double coordinateY) {
+        try {
+            World.createFood(type, coordinateX, coordinateY);
+        } catch (CommandExecException ex) {
+            Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void createJewel(int type, double coordinateX, double coordinateY) {
+        try {
+            World.createJewel(type, coordinateX, coordinateY);
+        } catch (CommandExecException ex) {
+            Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
     private void createNewCreature_ButtonClick() {
-        CreateCreatureFrameController controller = new CreateCreatureFrameController(200, 200, this);
+        CreateCreatureFrameController controller = new CreateCreatureFrameController(w.getEnvironmentWidth(), w.getEnvironmentHeight(), this);
     }
 
     public void createNewCreature(double coordinateX, double coordinateY) {
@@ -68,17 +96,11 @@ public class MainFrameController {
             height = w.getEnvironmentHeight();
 
             w.reset();
-            World.createFood(0, 350, 75);
-            World.createFood(0, 100, 220);
-            World.createFood(1, 250, 210);
             World.createDeliverySpot(250, 250);
-            World.createJewel(0, 10, 50);
-            World.createJewel(1, 100, 500);
             World.createBrick(3, 500, 200, 505, 300);
-            c.start();
-
         } catch (Exception e) {
             System.out.println("Erro capaturado");
         }
     }
+
 }

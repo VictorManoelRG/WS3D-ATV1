@@ -37,7 +37,7 @@ public class CreateCreatureFrame extends javax.swing.JFrame {
         setMinimumSize(null);
         setResizable(false);
 
-        LabelCreateCoordinates.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        LabelCreateCoordinates.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         LabelCreateCoordinates.setText("jLabel1");
         LabelCreateCoordinates.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
 
@@ -112,6 +112,7 @@ public class CreateCreatureFrame extends javax.swing.JFrame {
         );
 
         pack();
+        setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
     private void CoordinateXActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CoordinateXActionPerformed

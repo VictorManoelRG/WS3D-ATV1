@@ -5,7 +5,6 @@
 package WS3DApp.Controls;
 
 import WS3DApp.MainFrameController;
-import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 
@@ -25,19 +24,23 @@ public class CreateCreatureFrameController {
     }
 
     private void setupFrame(double lengthX, double lengthY) {
-        
-        
 
         String text = "Coordenadas: X = " + lengthX + ", Y = " + lengthY;
         createCreatureFrame = new CreateCreatureFrame();
-        
-        
-        
+
+        createCreatureFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
         createCreatureFrame.LabelCreateCoordinates.setText(text);
+        createCreatureFrame.LabelCreateCoordinates.setHorizontalAlignment(SwingConstants.CENTER);
+        createCreatureFrame.LabelCreateCoordinates.setHorizontalTextPosition(SwingConstants.CENTER);
+
 
         createCreatureFrame.CreateCreatureButton.addActionListener((ActionEvent e) -> {
             createNewCreature_ButtonClick(lengthX, lengthY);
         });
+        
+        createCreatureFrame.CoordinateX.setText(String.valueOf(lengthX));
+        createCreatureFrame.CoordinateY.setText(String.valueOf(lengthY));
 
         createCreatureFrame.setVisible(true);
     }
@@ -51,6 +54,7 @@ public class CreateCreatureFrameController {
                     "Coordenadas inválidas.",
                     "Erro ao Criar Criatura",
                     JOptionPane.WARNING_MESSAGE);
+            return;
         }
 
         mainFrameController.createNewCreature(coordinateX, coordinateY);
