@@ -6,8 +6,6 @@ package WS3DApp.Controls;
 
 import WS3DApp.MainFrameController;
 import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 

@@ -34,11 +34,10 @@ public class CreateCreatureFrameController {
         createCreatureFrame.LabelCreateCoordinates.setHorizontalAlignment(SwingConstants.CENTER);
         createCreatureFrame.LabelCreateCoordinates.setHorizontalTextPosition(SwingConstants.CENTER);
 
-
         createCreatureFrame.CreateCreatureButton.addActionListener((ActionEvent e) -> {
             createNewCreature_ButtonClick(lengthX, lengthY);
         });
-        
+
         createCreatureFrame.CoordinateX.setText(String.valueOf(lengthX));
         createCreatureFrame.CoordinateY.setText(String.valueOf(lengthY));
 

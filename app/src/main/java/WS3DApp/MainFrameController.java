@@ -1,10 +1,9 @@
 package WS3DApp;
 
-import WS3DApp.Controls.CreateBricksFrame;
+import WS3DApp.Controls.ControlCreatureByKeyboardFrame;
 import WS3DApp.Controls.CreateBricksFrameController;
 import WS3DApp.Controls.CreateCreatureFrameController;
 import WS3DApp.Controls.CreateThingsFrameController;
-import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
 import ws3dproxy.model.Creature;
@@ -20,10 +19,11 @@ public class MainFrameController {
 
     private WS3DProxy proxy = new WS3DProxy();
 
-    public Creature c;
+    public Creature controlledCreature;
+
     public World w;
-    public int width;
-    public int height;
+
+    private KeyEvent actualKey;
 
     private List<Creature> listCreatures = new ArrayList<>();
     private MainFrame mainFrame;
@@ -35,6 +35,23 @@ public class MainFrameController {
     }
 
     private void setupFrame() {
+
+        mainFrame.ControlCreatureByKeyboardButton.addActionListener((ActionEvent e) -> {
+            ControlCreatureByKeyboardFrame byKeyboardFrame = new ControlCreatureByKeyboardFrame(controlledCreature);
+        });
+
+        mainFrame.CreatureList.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                String selectedName = e.getItem().toString();
+
+                for (Creature creature : listCreatures) {
+                    if (creature.getName().equals(selectedName)) {
+                        controlledCreature = creature;
+                        break;
+                    }
+                }
+            }
+        });
 
         mainFrame.CreateCreatureButton.addActionListener((ActionEvent e) -> {
             createNewCreature_ButtonClick();
@@ -92,8 +109,7 @@ public class MainFrameController {
             Creature c = proxy.createCreature(coordinateX, coordinateY, 0);
             listCreatures.add(c);
             mainFrame.CreatureList.addItem(c.getName());
-            c.start();
-
+            mainFrame.CreatureList.setSelectedItem(c.getName());
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(null,
                     "Não foi possível criar a criatura.",
@@ -106,15 +122,9 @@ public class MainFrameController {
         WS3DProxy proxy = new WS3DProxy();
         try {
             w = World.getInstance();
-            width = w.getEnvironmentWidth();
-            height = w.getEnvironmentHeight();
-
             w.reset();
-            World.createDeliverySpot(250, 250);
-            World.createBrick(3, 500, 200, 505, 300);
         } catch (Exception e) {
             System.out.println("Erro capaturado");
         }
     }
-
 }
