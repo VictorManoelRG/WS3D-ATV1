@@ -31,7 +31,7 @@ public class MainFrameController {
         mainFrame = new MainFrame();
         setupFrame();
     }
-
+    
     private void setupFrame() {
         mainFrame.CreatureList.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {

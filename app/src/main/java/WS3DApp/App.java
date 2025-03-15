@@ -4,6 +4,7 @@
 package WS3DApp;
 
 public class App {
+
     private static MainFrameController controller;
 
     public static void main(String[] args) {
