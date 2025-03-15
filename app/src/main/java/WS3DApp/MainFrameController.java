@@ -7,6 +7,7 @@ import WS3DApp.Controls.CreateLeafletFrameController;
 import WS3DApp.Controls.CreateThingsFrameController;
 import ws3dproxy.model.Creature;
 import java.awt.event.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ public class MainFrameController {
     private WS3DProxy proxy = new WS3DProxy();
     public Creature controlledCreature;
     private Map<String, String> creatureMap = new HashMap<>();
+    private Map<String, List<Leaflet>> creatureLeaflets = new HashMap<>();
     public World w;
     private KeyEvent actualKey;
     private MainFrame mainFrame;
@@ -44,6 +46,7 @@ public class MainFrameController {
 
                 try {
                     controlledCreature = proxy.getCreature(id);
+                    updateCreatureLeafletsList(controlledCreature);
                 } catch (CommandExecException ex) {
                     Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -121,8 +124,11 @@ public class MainFrameController {
             createNewLeaflet_ButtonClick();
         });
 
-        DefaultListModel<String> listModel = new DefaultListModel<>();
-        mainFrame.ListObservableThings.setModel(listModel);
+        DefaultListModel<String> listModelObservableThings = new DefaultListModel<>();
+        mainFrame.ListObservableThings.setModel(listModelObservableThings);
+
+        DefaultListModel<String> listModelLeaflets = new DefaultListModel<>();
+        mainFrame.CreatureLeafletList.setModel(listModelLeaflets);
 
         mainFrame.setVisible(true);
     }
@@ -139,6 +145,28 @@ public class MainFrameController {
         }
     }
 
+    public void updateCreatureLeafletsList(Creature c) {
+        DefaultListModel<String> listModel = (DefaultListModel<String>) mainFrame.CreatureLeafletList.getModel();
+        listModel.clear();
+
+        List<Leaflet> leaflets = creatureLeaflets.get(c.getName());
+
+        if (leaflets == null) {
+            System.out.println("Nenhum leaflet encontrado para: " + c.getName());
+            return;
+        }
+
+        for (var item : leaflets) {
+            Integer[] valores = item.getItems().values().iterator().next();
+
+            listModel.addElement("Id: " + item.getID()
+                    + " Tipo de Jewel: " + item.getItems().keySet()
+                    + " Meta: " + valores[0]
+                    + " Acumulados: " + valores[1]
+                    + " Pagamento: " + item.getPayment());
+        }
+    }
+
     public void assignLeafletToCreature(String jewelColor, int quantity, int payment, String creatureName) {
         String creatureID = creatureMap.get(creatureName);
 
@@ -150,12 +178,16 @@ public class MainFrameController {
             long leafletID;
             Random random = new Random();
             do {
-                leafletID = Math.abs(random.nextLong(1000)); 
+                leafletID = Math.abs(random.nextLong(1000));
             } while (leafletExists(c, leafletID));
 
             Leaflet l = new Leaflet(leafletID, mapObjective, payment, 0);
             c.addLeaflet(l);
-            System.out.println(c.getLeaflets());
+
+            creatureLeaflets.computeIfAbsent(c.getName(), k -> new ArrayList<>()).add(l);
+
+            updateCreatureLeafletsList(c);
+
         } catch (CommandExecException ex) {
             Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
         }
