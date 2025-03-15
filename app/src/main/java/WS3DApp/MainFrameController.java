@@ -47,7 +47,7 @@ public class MainFrameController {
 
         mainFrame.ControlCreatureByKeyboardButton.addActionListener((ActionEvent e) -> {
             if (controlledCreature != null) {
-                ControlCreatureByKeyboardFrame byKeyboardFrame = new ControlCreatureByKeyboardFrame(controlledCreature);
+                ControlCreatureByKeyboardFrame byKeyboardFrame = new ControlCreatureByKeyboardFrame(controlledCreature, mainFrame.ListObservableThings);
                 byKeyboardFrame.addWindowListener(new WindowAdapter() {
                     @Override
                     public void windowClosed(WindowEvent e) {
@@ -57,6 +57,30 @@ public class MainFrameController {
                 });
             } else {
                 System.out.println("Nenhuma criatura selecionada.");
+            }
+        });
+
+        mainFrame.MoveToCoordinateButton.addActionListener((ActionEvent e) -> {
+            if (controlledCreature != null) {
+                try {
+                    double x = Double.parseDouble(mainFrame.CoordinateXMove.getText());
+                    double y = Double.parseDouble(mainFrame.CoordinateYMove.getText());
+                    controlledCreature.start();
+                    controlledCreature.moveto(4, x, y);
+                    Thread.sleep(5000);
+                    controlledCreature.stop();
+                    controlledCreature = controlledCreature.updateState();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(null,
+                            "Não foi possível mover a criatura.",
+                            "Erro ao mover a criatura",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(null,
+                        "Nenhuma criatura selecionada.",
+                        "Erro ao mover a criatura",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -71,6 +95,9 @@ public class MainFrameController {
         mainFrame.CreateBricksButton.addActionListener((ActionEvent e) -> {
             createNewBrick_ButtonClick();
         });
+
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        mainFrame.ListObservableThings.setModel(listModel);
 
         mainFrame.setVisible(true);
     }

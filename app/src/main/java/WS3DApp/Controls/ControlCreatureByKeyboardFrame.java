@@ -1,25 +1,29 @@
 package WS3DApp.Controls;
 
+import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JFrame;
 import ws3dproxy.CommandExecException;
 import ws3dproxy.model.Creature;
+import ws3dproxy.model.Thing;
 
 public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListener {
 
     private Creature controlledCreature;
     private boolean isStarted = false;
     private static final double STOPPED_THRESHOLD = 0.1;
+    private JList<String> ListObservableThings;
 
-    public ControlCreatureByKeyboardFrame(Creature creature) {
+    public ControlCreatureByKeyboardFrame(Creature creature, JList<String> list) {
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setSize(500, 500);
         this.setLayout(null);
         this.addKeyListener(this);
         controlledCreature = creature;
+        ListObservableThings = list;
         this.setVisible(true);
     }
 
@@ -44,27 +48,24 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
             if (controlledCreature.getWheel() > STOPPED_THRESHOLD) {
                 return;
             }
-            System.out.println("controlando" + controlledCreature.getName());
 
             int keyCode = e.getKeyCode();
             switch (keyCode) {
                 case KeyEvent.VK_UP:
-                    controlledCreature.move(1, 1, 0);
-
+                    moveCreature(1, 1);
                     break;
                 case KeyEvent.VK_DOWN:
-                    controlledCreature.move(-1, -1, 0);
+                    moveCreature(-1, -1);
                     break;
                 case KeyEvent.VK_LEFT:
-                    controlledCreature.move(2, -2, 0);
+                    moveCreature(2, -2);
                     break;
                 case KeyEvent.VK_RIGHT:
-                    controlledCreature.move(-2, 2, 0);
+                    moveCreature(-2, 2);
                     break;
                 default:
                     break;
             }
-            controlledCreature = controlledCreature.updateState();
         } catch (CommandExecException ex) {
             Logger.getLogger(ControlCreatureByKeyboardFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -77,16 +78,48 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
             return;
         }
 
-        try {
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                controlledCreature.move(0.01, 0.01, 0);
+                controlledCreature.stop();
+                controlledCreature = controlledCreature.updateState();
+                return null;
+            }
 
-            controlledCreature.move(0.01, 0.01, 0);
-            controlledCreature.stop();
-            controlledCreature = controlledCreature.updateState();
+            @Override
+            protected void done() {
+                isStarted = false;
+            }
+        }.execute();
+    }
 
-            isStarted = false;
+    private void moveCreature(double x, double y) {
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                controlledCreature.move(x, y, 0);
+                Thread.sleep(100);
+                controlledCreature = controlledCreature.updateState();
+                return null;
+            }
 
-        } catch (CommandExecException ex) {
-            Logger.getLogger(ControlCreatureByKeyboardFrame.class.getName()).log(Level.SEVERE, null, ex);
+            @Override
+            protected void done() {
+                updateThingsInVision();
+            }
+        }.execute();
+    }
+
+    private void updateThingsInVision() {
+        DefaultListModel<String> listModel = (DefaultListModel<String>) ListObservableThings.getModel();
+
+        listModel.clear();
+
+        List<Thing> visibleThings = controlledCreature.getThingsInVision();
+
+        for (Thing thing : visibleThings) {
+            listModel.addElement(thing.getName());
         }
     }
 }
