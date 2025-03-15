@@ -3,18 +3,21 @@ package WS3DApp;
 import WS3DApp.Controls.ControlCreatureByKeyboardFrame;
 import WS3DApp.Controls.CreateBricksFrameController;
 import WS3DApp.Controls.CreateCreatureFrameController;
+import WS3DApp.Controls.CreateLeafletFrameController;
 import WS3DApp.Controls.CreateThingsFrameController;
 import ws3dproxy.model.Creature;
 import java.awt.event.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import ws3dproxy.WS3DProxy;
 import ws3dproxy.model.World;
 import javax.swing.*;
 import ws3dproxy.CommandExecException;
+import ws3dproxy.model.Leaflet;
 import ws3dproxy.model.Thing;
 
 public class MainFrameController {
@@ -31,7 +34,7 @@ public class MainFrameController {
         mainFrame = new MainFrame();
         setupFrame();
     }
-    
+
     private void setupFrame() {
         mainFrame.CreatureList.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -73,7 +76,7 @@ public class MainFrameController {
 
                             controlledCreature.start();
                             controlledCreature.moveto(4, x, y);
-                            Thread.sleep(5000);  
+                            Thread.sleep(5000);
                         } catch (Exception ex) {
                             JOptionPane.showMessageDialog(null,
                                     "Não foi possível mover a criatura.",
@@ -92,7 +95,6 @@ public class MainFrameController {
                         } catch (CommandExecException ex) {
                             Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
                         }
-
                     }
                 }.execute();
             } else {
@@ -115,6 +117,10 @@ public class MainFrameController {
             createNewBrick_ButtonClick();
         });
 
+        mainFrame.CreateLeafletButton.addActionListener((ActionEvent e) -> {
+            createNewLeaflet_ButtonClick();
+        });
+
         DefaultListModel<String> listModel = new DefaultListModel<>();
         mainFrame.ListObservableThings.setModel(listModel);
 
@@ -131,6 +137,43 @@ public class MainFrameController {
         for (Thing thing : visibleThings) {
             listModel.addElement(thing.getName());
         }
+    }
+
+    public void assignLeafletToCreature(String jewelColor, int quantity, int payment, String creatureName) {
+        String creatureID = creatureMap.get(creatureName);
+
+        try {
+            Creature c = proxy.getCreature(creatureID);
+            HashMap<String, Integer[]> mapObjective = new HashMap<>();
+            mapObjective.put(jewelColor, new Integer[]{quantity, 0});
+
+            long leafletID;
+            Random random = new Random();
+            do {
+                leafletID = Math.abs(random.nextLong(1000)); 
+            } while (leafletExists(c, leafletID));
+
+            Leaflet l = new Leaflet(leafletID, mapObjective, payment, 0);
+            c.addLeaflet(l);
+            System.out.println(c.getLeaflets());
+        } catch (CommandExecException ex) {
+            Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private boolean leafletExists(Creature creature, long id) {
+        return creature.getLeaflets().stream().anyMatch(leaflet -> leaflet.getID() == id);
+    }
+
+    private void createNewLeaflet_ButtonClick() {
+        if (creatureMap.isEmpty()) {
+            JOptionPane.showMessageDialog(null,
+                    "Não foi possível criar um Leaflet sem antes criar criaturas.",
+                    "Erro ao Criar Leaflet",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        CreateLeafletFrameController controller = new CreateLeafletFrameController(creatureMap, this);
     }
 
     private void createNewBrick_ButtonClick() {
@@ -199,4 +242,5 @@ public class MainFrameController {
             System.out.println("Erro capturado");
         }
     }
+
 }
