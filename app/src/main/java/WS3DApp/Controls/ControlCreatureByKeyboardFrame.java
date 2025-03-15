@@ -10,8 +10,8 @@ import ws3dproxy.model.Creature;
 
 public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListener {
 
-    private static Creature controlledCreature;
-    private static boolean isStarted = false;
+    private Creature controlledCreature;
+    private boolean isStarted = false;
     private static final double STOPPED_THRESHOLD = 0.1;
 
     public ControlCreatureByKeyboardFrame(Creature creature) {
@@ -41,27 +41,30 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
                 isStarted = true;
             }
 
-            if (controlledCreature.getSpeed() > STOPPED_THRESHOLD) {
+            if (controlledCreature.getWheel() > STOPPED_THRESHOLD) {
                 return;
             }
+            System.out.println("controlando" + controlledCreature.getName());
 
             int keyCode = e.getKeyCode();
             switch (keyCode) {
                 case KeyEvent.VK_UP:
                     controlledCreature.move(1, 1, 0);
+
                     break;
                 case KeyEvent.VK_DOWN:
                     controlledCreature.move(-1, -1, 0);
                     break;
                 case KeyEvent.VK_LEFT:
-                    controlledCreature.move(-2, 2, 0);
+                    controlledCreature.move(2, -2, 0);
                     break;
                 case KeyEvent.VK_RIGHT:
-                    controlledCreature.move(2, -2, 0);
+                    controlledCreature.move(-2, 2, 0);
                     break;
                 default:
                     break;
             }
+            controlledCreature = controlledCreature.updateState();
         } catch (CommandExecException ex) {
             Logger.getLogger(ControlCreatureByKeyboardFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -76,8 +79,9 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
 
         try {
 
-            controlledCreature.stop();
             controlledCreature.move(0.01, 0.01, 0);
+            controlledCreature.stop();
+            controlledCreature = controlledCreature.updateState();
 
             isStarted = false;
 

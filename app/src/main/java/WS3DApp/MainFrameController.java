@@ -4,10 +4,10 @@ import WS3DApp.Controls.ControlCreatureByKeyboardFrame;
 import WS3DApp.Controls.CreateBricksFrameController;
 import WS3DApp.Controls.CreateCreatureFrameController;
 import WS3DApp.Controls.CreateThingsFrameController;
-import java.util.ArrayList;
-import java.util.List;
 import ws3dproxy.model.Creature;
 import java.awt.event.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import ws3dproxy.WS3DProxy;
@@ -18,14 +18,10 @@ import ws3dproxy.CommandExecException;
 public class MainFrameController {
 
     private WS3DProxy proxy = new WS3DProxy();
-
     public Creature controlledCreature;
-
+    private Map<String, String> creatureMap = new HashMap<>();
     public World w;
-
     private KeyEvent actualKey;
-
-    private List<Creature> listCreatures = new ArrayList<>();
     private MainFrame mainFrame;
 
     public MainFrameController() {
@@ -35,21 +31,32 @@ public class MainFrameController {
     }
 
     private void setupFrame() {
-
-        mainFrame.ControlCreatureByKeyboardButton.addActionListener((ActionEvent e) -> {
-            ControlCreatureByKeyboardFrame byKeyboardFrame = new ControlCreatureByKeyboardFrame(controlledCreature);
-        });
-
         mainFrame.CreatureList.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {
-                String selectedName = e.getItem().toString();
+                String selectedItem = mainFrame.CreatureList.getSelectedItem().toString();
+                String id = creatureMap.get(selectedItem);
+                System.out.println("Item selecionado: " + selectedItem + " com ID: " + id);
 
-                for (Creature creature : listCreatures) {
-                    if (creature.getName().equals(selectedName)) {
-                        controlledCreature = creature;
-                        break;
-                    }
+                try {
+                    controlledCreature = proxy.getCreature(id);
+                } catch (CommandExecException ex) {
+                    Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
                 }
+            }
+        });
+
+        mainFrame.ControlCreatureByKeyboardButton.addActionListener((ActionEvent e) -> {
+            if (controlledCreature != null) {
+                ControlCreatureByKeyboardFrame byKeyboardFrame = new ControlCreatureByKeyboardFrame(controlledCreature);
+                byKeyboardFrame.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosed(WindowEvent e) {
+                        byKeyboardFrame.dispose();
+                        System.out.println("Frame fechado.");
+                    }
+                });
+            } else {
+                System.out.println("Nenhuma criatura selecionada.");
             }
         });
 
@@ -107,9 +114,16 @@ public class MainFrameController {
     public void createNewCreature(double coordinateX, double coordinateY) {
         try {
             Creature c = proxy.createCreature(coordinateX, coordinateY, 0);
-            listCreatures.add(c);
-            mainFrame.CreatureList.addItem(c.getName());
-            mainFrame.CreatureList.setSelectedItem(c.getName());
+            System.out.println("Criatura criada com nome: " + c.getName() + " com ID: " + c.getIndex());
+
+            creatureMap.put(c.getName(), c.getIndex());
+
+            SwingUtilities.invokeLater(() -> {
+                mainFrame.CreatureList.addItem(c.getName());
+                mainFrame.CreatureList.setSelectedItem(c.getName());
+            });
+
+            System.out.println("Criatura adicionada: " + c.getName());
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(null,
                     "Não foi possível criar a criatura.",
@@ -124,7 +138,7 @@ public class MainFrameController {
             w = World.getInstance();
             w.reset();
         } catch (Exception e) {
-            System.out.println("Erro capaturado");
+            System.out.println("Erro capturado");
         }
     }
 }
