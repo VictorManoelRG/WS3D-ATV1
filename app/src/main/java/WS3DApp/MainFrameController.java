@@ -7,6 +7,7 @@ import WS3DApp.Controls.CreateThingsFrameController;
 import ws3dproxy.model.Creature;
 import java.awt.event.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -14,6 +15,7 @@ import ws3dproxy.WS3DProxy;
 import ws3dproxy.model.World;
 import javax.swing.*;
 import ws3dproxy.CommandExecException;
+import ws3dproxy.model.Thing;
 
 public class MainFrameController {
 
@@ -47,7 +49,7 @@ public class MainFrameController {
 
         mainFrame.ControlCreatureByKeyboardButton.addActionListener((ActionEvent e) -> {
             if (controlledCreature != null) {
-                ControlCreatureByKeyboardFrame byKeyboardFrame = new ControlCreatureByKeyboardFrame(controlledCreature);
+                ControlCreatureByKeyboardFrame byKeyboardFrame = new ControlCreatureByKeyboardFrame(controlledCreature, this, mainFrame.ListObservableThings);
                 byKeyboardFrame.addWindowListener(new WindowAdapter() {
                     @Override
                     public void windowClosed(WindowEvent e) {
@@ -57,6 +59,31 @@ public class MainFrameController {
                 });
             } else {
                 System.out.println("Nenhuma criatura selecionada.");
+            }
+        });
+
+        mainFrame.MoveToCoordinateButton.addActionListener((ActionEvent e) -> {
+            if (controlledCreature != null) {
+                try {
+                    double x = Double.parseDouble(mainFrame.CoordinateXMove.getText());
+                    double y = Double.parseDouble(mainFrame.CoordinateYMove.getText());
+                    controlledCreature.start();
+                    controlledCreature.moveto(4, x, y);
+                    Thread.sleep(5000);
+                    updateThingsInVision();
+                    controlledCreature.stop();
+                    controlledCreature = controlledCreature.updateState();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(null,
+                            "Não foi possível mover a criatura.",
+                            "Erro ao mover a criatura",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(null,
+                        "Nenhuma criatura selecionada.",
+                        "Erro ao mover a criatura",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -72,7 +99,22 @@ public class MainFrameController {
             createNewBrick_ButtonClick();
         });
 
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        mainFrame.ListObservableThings.setModel(listModel);
+
         mainFrame.setVisible(true);
+    }
+
+    public void updateThingsInVision() {
+        DefaultListModel<String> listModel = (DefaultListModel<String>) mainFrame.ListObservableThings.getModel();
+
+        listModel.clear();
+
+        List<Thing> visibleThings = controlledCreature.getThingsInVision();
+
+        for (Thing thing : visibleThings) {
+            listModel.addElement(thing.getName());
+        }
     }
 
     private void createNewBrick_ButtonClick() {
