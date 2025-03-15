@@ -4,10 +4,12 @@ import WS3DApp.MainFrameController;
 import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import ws3dproxy.CommandExecException;
 import ws3dproxy.model.Creature;
+import ws3dproxy.model.Thing;
 
 public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListener {
 

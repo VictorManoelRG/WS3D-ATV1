@@ -64,21 +64,37 @@ public class MainFrameController {
 
         mainFrame.MoveToCoordinateButton.addActionListener((ActionEvent e) -> {
             if (controlledCreature != null) {
-                try {
-                    double x = Double.parseDouble(mainFrame.CoordinateXMove.getText());
-                    double y = Double.parseDouble(mainFrame.CoordinateYMove.getText());
-                    controlledCreature.start();
-                    controlledCreature.moveto(4, x, y);
-                    Thread.sleep(5000);
-                    updateThingsInVision();
-                    controlledCreature.stop();
-                    controlledCreature = controlledCreature.updateState();
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(null,
-                            "Não foi possível mover a criatura.",
-                            "Erro ao mover a criatura",
-                            JOptionPane.ERROR_MESSAGE);
-                }
+                new SwingWorker<Void, Void>() {
+                    @Override
+                    protected Void doInBackground() throws Exception {
+                        try {
+                            double x = Double.parseDouble(mainFrame.CoordinateXMove.getText());
+                            double y = Double.parseDouble(mainFrame.CoordinateYMove.getText());
+
+                            controlledCreature.start();
+                            controlledCreature.moveto(4, x, y);
+                            Thread.sleep(5000);  
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(null,
+                                    "Não foi possível mover a criatura.",
+                                    "Erro ao mover a criatura",
+                                    JOptionPane.ERROR_MESSAGE);
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    protected void done() {
+                        try {
+                            controlledCreature.stop();
+                            controlledCreature = controlledCreature.updateState();
+                            updateThingsInVision();
+                        } catch (CommandExecException ex) {
+                            Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+
+                    }
+                }.execute();
             } else {
                 JOptionPane.showMessageDialog(null,
                         "Nenhuma criatura selecionada.",
