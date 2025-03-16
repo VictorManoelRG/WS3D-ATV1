@@ -21,6 +21,7 @@ import ws3dproxy.CommandExecException;
 import ws3dproxy.model.Bag;
 import ws3dproxy.model.Leaflet;
 import ws3dproxy.model.Thing;
+import ws3dproxy.util.Constants;
 
 public class MainFrameController {
 
@@ -29,6 +30,7 @@ public class MainFrameController {
     private Map<String, String> creatureMap = new HashMap<>();
     private Map<String, List<Leaflet>> creatureLeaflets = new HashMap<>();
     private Map<String, Bag> creatureBag = new HashMap<>();
+    private Map<String, Integer> creaturePoints = new HashMap<>();
     public World w;
     private KeyEvent actualKey;
     private MainFrame mainFrame;
@@ -173,6 +175,9 @@ public class MainFrameController {
         }
 
         for (var item : leaflets) {
+            if(item.getSituation()!=0){
+                continue;
+            }
             Integer[] valores = item.getItems().values().iterator().next();
 
             listModel.addElement("Id: " + item.getID()
@@ -185,20 +190,36 @@ public class MainFrameController {
 
     public void canDeliverLeaflet(Creature creature) {
         var leaflets = creatureLeaflets.get(creature.getName());
+
+        for (var leaflet : leaflets) {
+            if (leaflet.getSituation() == 1) {
+                continue;
+            }
+            
+            if (leaflet.isCompleted()) {
+                creaturePoints.put(creature.getName(), creaturePoints.get(creature.getName()) + leaflet.getPayment());
+                leaflet.setSituation(1);
+                if (controlledCreature.getName().equals(creature.getName())) {
+                    mainFrame.CreatureTotalPoints.setText(creaturePoints.get(controlledCreature.getName()).toString());
+                }
+            }
+        }
+    }
+    
+    public void printAllLeaflets(Creature creature){
+        var leaflets = creature.getLeaflets();
         
         for(var leaflet : leaflets){
-            System.out.println(leaflet.toString());
-            if(leaflet.isCompleted()){        
-                System.err.println(leaflet.getPayment());
-            }
+            System.out.println(leaflet);
         }
     }
 
     public void updateCreatureBag(Creature creature, String color) {
-        creature.updateBag(); // Garante que a bag seja atualizada
+        creature.updateBag(); 
         System.out.println("Item coletado, bag: " + creature.getBag());
         creatureBag.put(creature.getName(), creature.getBag());
-        var leaflets = creature.getLeaflets();
+        var leaflets = creatureLeaflets.get(creature.getName());
+        printAllLeaflets(creature);
 
         for (var leaflet : leaflets) {
             var itemsMap = leaflet.getItems();
@@ -206,7 +227,7 @@ public class MainFrameController {
             if (itemsMap.containsKey(color)) {
 
                 Integer[] counts = itemsMap.get(color);
-                if(counts[0]==counts[1]){
+                if (counts[0] == counts[1]) {
                     continue;
                 }
                 counts[1] += 1;
@@ -215,9 +236,10 @@ public class MainFrameController {
             }
             leaflet.setItems(itemsMap);
         }
-        
+
         creatureLeaflets.put(creature.getName(), leaflets);
         updateCreatureBagList(creature);
+        updateCreatureLeafletsList(creature);
     }
 
     private void updateCreatureBagList(Creature creature) {
@@ -235,6 +257,12 @@ public class MainFrameController {
         listModel.addElement("Comidas perecíveis: " + bag.getNumberPFood());
         listModel.addElement("Comidas não perecíveis: " + bag.getNumberNPFood());
         listModel.addElement("Total de cristais: " + bag.getTotalNumberCrystals());
+        listModel.addElement("Total de cristais vermelhos: " + bag.getNumberCrystalPerType(Constants.colorRED));
+        listModel.addElement("Total de cristais verdes: " + bag.getNumberCrystalPerType(Constants.colorGREEN));
+        listModel.addElement("Total de cristais azuis: " + bag.getNumberCrystalPerType(Constants.colorBLUE));
+        listModel.addElement("Total de cristais amarelos: " + bag.getNumberCrystalPerType(Constants.colorYELLOW));
+        listModel.addElement("Total de cristais magentas: " + bag.getNumberCrystalPerType(Constants.colorMAGENTA));
+        listModel.addElement("Total de cristais brancos: " + bag.getNumberCrystalPerType(Constants.colorWHITE));
     }
 
     public void assignLeafletToCreature(String jewelColor, int quantity, int payment, String creatureName) {
@@ -255,6 +283,7 @@ public class MainFrameController {
 
             Leaflet l = new Leaflet(leafletID, mapObjective, payment, 0);
             c.addLeaflet(l);
+            System.out.println("adicionando novo leaflet: " +l);
 
             creatureLeaflets.computeIfAbsent(c.getName(), k -> new ArrayList<>()).add(l);
 
@@ -324,10 +353,13 @@ public class MainFrameController {
             System.out.println("Criatura criada com nome: " + c.getName() + " com ID: " + c.getIndex());
 
             creatureMap.put(c.getName(), c.getIndex());
+            creaturePoints.put(c.getName(), 0);
+            printAllLeaflets(c);
 
             SwingUtilities.invokeLater(() -> {
                 mainFrame.CreatureList.addItem(c.getName());
                 mainFrame.CreatureList.setSelectedItem(c.getName());
+                mainFrame.CreatureTotalPoints.setText(creaturePoints.get(c.getName()).toString());
             });
 
             System.out.println("Criatura adicionada: " + c.getName());
