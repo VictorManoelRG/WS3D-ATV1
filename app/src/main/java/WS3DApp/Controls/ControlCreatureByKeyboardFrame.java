@@ -2,28 +2,30 @@ package WS3DApp.Controls;
 
 import WS3DApp.MainFrameController;
 import javax.swing.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.util.List;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.Timer;
 import ws3dproxy.CommandExecException;
 import ws3dproxy.model.Creature;
-import ws3dproxy.model.Leaflet;
 import ws3dproxy.model.Thing;
 import ws3dproxy.model.World;
-import ws3dproxy.util.Constants;
 
 public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListener {
 
     private static final double COLLECTION_DISTANCE_THRESHOLD_JEWEL = 20.0;
     private static final double COLLECTION_DISTANCE_THRESHOLD_DELIVERY_SPOT = 85.0;
+    private static final double STOPPED_THRESHOLD = 0.1;
+
     private Creature controlledCreature;
     private boolean isStarted = false;
-    private static final double STOPPED_THRESHOLD = 0.1;
     private JList<String> ListObservableThings;
     private MainFrameController mainFrameController;
     private World world;
+
+    private Timer energyMonitor;
 
     public ControlCreatureByKeyboardFrame(Creature creature, MainFrameController controller, JList<String> list, World w) {
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -34,6 +36,16 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
         ListObservableThings = list;
         mainFrameController = controller;
         world = w;
+
+        startFuelMonitor();
+
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                closeFrame();
+            }
+        });
+
         this.setVisible(true);
     }
 
@@ -55,19 +67,15 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
         int keyCode = e.getKeyCode();
         switch (keyCode) {
             case KeyEvent.VK_UP:
-
                 moveCreature(3, 3);
                 break;
             case KeyEvent.VK_DOWN:
-
                 moveCreature(-3, -3);
                 break;
             case KeyEvent.VK_LEFT:
-
                 moveCreature(2, -2);
                 break;
             case KeyEvent.VK_RIGHT:
-
                 moveCreature(-2, 2);
                 break;
             default:
@@ -82,14 +90,15 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
 
     private void moveCreature(double x, double y) {
         try {
-            // Move the creature directly
             controlledCreature.move(x, y, 0);
             controlledCreature = controlledCreature.updateState();
             mainFrameController.updateThingsInVision();
 
-            var thingsInVision = controlledCreature.getThingsInVision();
-            for (Thing thing : thingsInVision) {
-                collectThingIfNear(controlledCreature, thing);
+            var thingsInVision = new ArrayList<>(controlledCreature.getThingsInVision());
+            Iterator<Thing> iterator = thingsInVision.iterator();
+            while (iterator.hasNext()) {
+                Thing thing = iterator.next();
+                mainFrameController.collectThingIfNear(controlledCreature, thing);
             }
 
             controlledCreature = controlledCreature.updateState();
@@ -101,42 +110,43 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
 
     private void stopMovement() {
         try {
-
             controlledCreature.move(0, 0, 0);
             controlledCreature.stop();
             controlledCreature = controlledCreature.updateState();
         } catch (CommandExecException ex) {
             Logger.getLogger(ControlCreatureByKeyboardFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
-
     }
 
-    private void collectThingIfNear(Creature creature, Thing thing) {
-        if (isNearThing(creature, thing)) {
-            try {
-                if (thing.getAttributes().getCategory() == Constants.categoryDeliverySPOT) {
+    private void startFuelMonitor() {
+        energyMonitor = new Timer(250, e -> updateFuelDisplay());
+        energyMonitor.start();
+    }
 
-                    mainFrameController.canDeliverLeaflet(creature);
-                } else if (thing.getAttributes().getCategory() == Constants.categoryJEWEL) {
-                    creature.putInSack(thing.getAttributes().getName());
-                    creature.updateBag(); // Atualiza a bag após coletar o item
-                    controlledCreature = creature.updateState();
-                    mainFrameController.updateCreatureBag(controlledCreature, thing.getAttributes().getColor());
-                }
-            } catch (CommandExecException e) {
-                System.err.println("Erro ao coletar o item: " + e.getMessage());
+    private void updateFuelDisplay() {
+        SwingUtilities.invokeLater(() -> {
+            double energy = controlledCreature.getFuel();
+            mainFrameController.setCreatureEnergy(energy);
+        });
+    }
+
+    private void closeFrame() {
+        if (energyMonitor != null) {
+            energyMonitor.stop();
+        }
+
+        if (controlledCreature != null) {
+            try {
+                controlledCreature.move(0, 0, 0);
+                controlledCreature.stop();
+                Thread.sleep(2000);
+            } catch (CommandExecException ex) {
+                Logger.getLogger(ControlCreatureByKeyboardFrame.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(ControlCreatureByKeyboardFrame.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-    }
 
-    private boolean isNearThing(Creature creature, Thing thing) {
-        double distanceThreshold = COLLECTION_DISTANCE_THRESHOLD_JEWEL;
-        if (thing.getAttributes().getCategory() == Constants.categoryDeliverySPOT) {
-            distanceThreshold = COLLECTION_DISTANCE_THRESHOLD_DELIVERY_SPOT;
-        } else if (thing.getAttributes().getCategory() == Constants.categoryJEWEL) {
-            distanceThreshold = COLLECTION_DISTANCE_THRESHOLD_JEWEL;
-        }
-        double distance = creature.calculateDistanceTo(thing);
-        return distance < distanceThreshold;
+        System.out.println("Frame fechado e recursos liberados.");
     }
 }

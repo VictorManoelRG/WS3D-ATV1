@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package WS3DApp.Controls;
 
 import WS3DApp.MainFrameController;
@@ -11,17 +7,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-/**
- *
- * @author root
- */
 public class CreateThingsFrameController {
 
     private boolean isFruit = false;
     private static MainFrameController mainFrameController;
     private static CreateThingsFrame createThingsFrame;
     private static final List<String> listCrystalColors = List.of("Vermelho", "Verde", "Azul", "Amarelo", "Magenta", "Branco");
-    private static final List<String> fruitTypes = List.of("Perecível", "Não Perecível");
 
     private double WorldLengthX;
     private double WorldLengthY;
@@ -56,16 +47,16 @@ public class CreateThingsFrameController {
 
                 if ("Cristal".equals(selectedItem)) {
                     isFruit = false;
+                    createThingsFrame.ComboboxTypes.setVisible(true);
+                    createThingsFrame.ItemTypeLabel.setVisible(true);
                     createThingsFrame.ComboboxTypes.removeAllItems();
                     for (String color : listCrystalColors) {
                         createThingsFrame.ComboboxTypes.addItem(color);
                     }
                 } else {
                     isFruit = true;
-                    createThingsFrame.ComboboxTypes.removeAllItems();
-                    for (String fruit : fruitTypes) {
-                        createThingsFrame.ComboboxTypes.addItem(fruit);
-                    }
+                    createThingsFrame.ComboboxTypes.setVisible(false);
+                    createThingsFrame.ItemTypeLabel.setVisible(false);
                 }
 
                 isUpdating.set(false);
@@ -87,7 +78,13 @@ public class CreateThingsFrameController {
             int type = createThingsFrame.ComboboxTypes.getSelectedIndex();
 
             if (isFruit) {
-                mainFrameController.createFood(type, coordinateX, coordinateY);
+                int fruitType;
+                if (createThingsFrame.ComboboxThings.getSelectedItem().toString().equals("Maça")) {
+                    fruitType = 0;
+                } else {
+                    fruitType = 1;
+                }
+                mainFrameController.createFood(fruitType, coordinateX, coordinateY);
             } else {
                 mainFrameController.createJewel(type, coordinateX, coordinateY);
             }

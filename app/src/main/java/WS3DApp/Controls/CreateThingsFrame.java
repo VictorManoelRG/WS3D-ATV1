@@ -28,7 +28,7 @@ public class CreateThingsFrame extends javax.swing.JFrame {
 
         jLabel1 = new javax.swing.JLabel();
         ComboboxThings = new javax.swing.JComboBox<>();
-        jLabel2 = new javax.swing.JLabel();
+        ItemTypeLabel = new javax.swing.JLabel();
         ComboboxTypes = new javax.swing.JComboBox<>();
         CreateThingButton = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
@@ -44,7 +44,7 @@ public class CreateThingsFrame extends javax.swing.JFrame {
 
         ComboboxThings.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Cristal", "Maça", "Noz" }));
 
-        jLabel2.setText("Qual o tipo do item?");
+        ItemTypeLabel.setText("Qual o tipo do item?");
 
         CreateThingButton.setText("Criar Thing");
 
@@ -76,7 +76,7 @@ public class CreateThingsFrame extends javax.swing.JFrame {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
                             .addComponent(ComboboxThings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel2)
+                            .addComponent(ItemTypeLabel)
                             .addComponent(ComboboxTypes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(72, 72, 72)
@@ -103,7 +103,7 @@ public class CreateThingsFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(ComboboxThings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(27, 27, 27)
-                .addComponent(jLabel2)
+                .addComponent(ItemTypeLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(ComboboxTypes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 13, Short.MAX_VALUE)
@@ -170,8 +170,8 @@ public class CreateThingsFrame extends javax.swing.JFrame {
     public javax.swing.JTextField CoordinateX;
     public javax.swing.JTextField CoordinateY;
     public javax.swing.JButton CreateThingButton;
+    public javax.swing.JLabel ItemTypeLabel;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;

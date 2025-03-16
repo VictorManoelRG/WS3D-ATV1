@@ -9,6 +9,7 @@ import ws3dproxy.model.Creature;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -24,6 +25,9 @@ import ws3dproxy.model.Thing;
 import ws3dproxy.util.Constants;
 
 public class MainFrameController {
+
+    private static final double COLLECTION_DISTANCE_THRESHOLD_JEWEL = 20.0;
+    private static final double COLLECTION_DISTANCE_THRESHOLD_DELIVERY_SPOT = 85.0;
 
     private WS3DProxy proxy = new WS3DProxy();
     public Creature controlledCreature;
@@ -110,6 +114,16 @@ public class MainFrameController {
                             controlledCreature.stop();
                             controlledCreature = controlledCreature.updateState();
                             updateThingsInVision();
+
+                            var thingsInVision = new ArrayList<>(controlledCreature.getThingsInVision());
+                            Iterator<Thing> iterator = thingsInVision.iterator();
+                            while (iterator.hasNext()) {
+                                Thing thing = iterator.next();
+                                collectThingIfNear(controlledCreature, thing);
+                            }
+
+                            controlledCreature = controlledCreature.updateState();
+                            setCreatureEnergy(controlledCreature.getFuel());
                         } catch (CommandExecException ex) {
                             Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
                         }
@@ -149,6 +163,50 @@ public class MainFrameController {
         mainFrame.CreatureBagList.setModel(listModelBags);
 
         mainFrame.setVisible(true);
+    }
+
+    public void collectThingIfNear(Creature creature, Thing thing) {
+        if (isNearThing(creature, thing)) {
+            try {
+                switch (thing.getAttributes().getCategory()) {
+                    case Constants.categoryDeliverySPOT ->
+                        canDeliverLeaflet(creature);
+                    case Constants.categoryPFOOD, Constants.categoryNPFOOD -> {
+                        creature.eatIt(thing.getName());
+                        creature = creature.updateState();
+                        Thread.sleep(500);
+                        System.out.println("combustivel: " + creature.getFuel());
+                        controlledCreature = creature.updateState();
+                    }
+                    case Constants.categoryJEWEL -> {
+                        creature.updateBag();
+                        creature.putInSack(thing.getAttributes().getName());
+                        Thread.sleep(500);
+                        creature.updateBag();
+
+                        updateCreatureBag(controlledCreature, thing.getAttributes().getColor());
+                    }
+                    default -> {
+                    }
+                }
+                controlledCreature = creature.updateState();
+            } catch (CommandExecException e) {
+                System.err.println("Erro ao coletar o item: " + e.getMessage());
+            } catch (InterruptedException ex) {
+                Logger.getLogger(ControlCreatureByKeyboardFrame.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
+    private boolean isNearThing(Creature creature, Thing thing) {
+        double distanceThreshold = COLLECTION_DISTANCE_THRESHOLD_JEWEL;
+        if (thing.getAttributes().getCategory() == Constants.categoryDeliverySPOT) {
+            distanceThreshold = COLLECTION_DISTANCE_THRESHOLD_DELIVERY_SPOT;
+        }
+
+        double distance = creature.calculateDistanceTo(thing);
+
+        return distance < distanceThreshold;
     }
 
     public void updateThingsInVision() {
@@ -198,6 +256,10 @@ public class MainFrameController {
 
     public void canDeliverLeaflet(Creature creature) {
         var leaflets = creatureLeaflets.get(creature.getName());
+
+        if (leaflets == null) {
+            return;
+        }
 
         for (var leaflet : leaflets) {
             if (leaflet.getSituation() == 1) {
@@ -253,6 +315,7 @@ public class MainFrameController {
             return;
         }
 
+        System.out.println("acessou bag");
         listModel.addElement("Total de comida: " + bag.getTotalNumberFood());
         listModel.addElement("Comidas perecíveis: " + bag.getNumberPFood());
         listModel.addElement("Comidas não perecíveis: " + bag.getNumberNPFood());
@@ -407,5 +470,9 @@ public class MainFrameController {
         } catch (Exception e) {
             System.out.println("Erro capturado: " + e.getMessage());
         }
+    }
+
+    public void setCreatureEnergy(double energy) {
+        mainFrame.CreatureEnergy.setText(String.valueOf((int) Math.floor(energy)));
     }
 }

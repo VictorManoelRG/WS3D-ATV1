@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package WS3DApp.Controls;
 
 import WS3DApp.MainFrameController;
@@ -9,10 +5,6 @@ import java.awt.event.ActionEvent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-/**
- *
- * @author root
- */
 public class CreateBricksFrameController {
 
     private static MainFrameController mainFrameController;
