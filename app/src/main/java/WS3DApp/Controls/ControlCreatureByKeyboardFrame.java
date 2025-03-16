@@ -4,22 +4,24 @@ import WS3DApp.MainFrameController;
 import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import ws3dproxy.CommandExecException;
 import ws3dproxy.model.Creature;
 import ws3dproxy.model.Thing;
+import ws3dproxy.model.World;
 
 public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListener {
 
+    private static final double COLLECTION_DISTANCE_THRESHOLD = 20.0;
     private Creature controlledCreature;
     private boolean isStarted = false;
     private static final double STOPPED_THRESHOLD = 0.1;
     private JList<String> ListObservableThings;
     private MainFrameController mainFrameController;
+    private World world;
 
-    public ControlCreatureByKeyboardFrame(Creature creature, MainFrameController controller, JList<String> list) {
+    public ControlCreatureByKeyboardFrame(Creature creature, MainFrameController controller, JList<String> list, World w) {
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setSize(500, 500);
         this.setLayout(null);
@@ -27,90 +29,101 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
         controlledCreature = creature;
         ListObservableThings = list;
         mainFrameController = controller;
+        world = w;
         this.setVisible(true);
     }
 
     @Override
     public void keyTyped(KeyEvent e) {
-
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() != KeyEvent.VK_UP && e.getKeyCode() != KeyEvent.VK_DOWN
-                && e.getKeyCode() != KeyEvent.VK_LEFT && e.getKeyCode() != KeyEvent.VK_RIGHT) {
-            return;
-        }
-
-        try {
-            if (!isStarted) {
+        if (!isStarted) {
+            try {
                 controlledCreature.start();
                 isStarted = true;
+            } catch (CommandExecException ex) {
+                Logger.getLogger(ControlCreatureByKeyboardFrame.class.getName()).log(Level.SEVERE, null, ex);
             }
+        }
 
-            if (controlledCreature.getWheel() > STOPPED_THRESHOLD) {
-                return;
-            }
+        int keyCode = e.getKeyCode();
+        switch (keyCode) {
+            case KeyEvent.VK_UP:
 
-            int keyCode = e.getKeyCode();
-            switch (keyCode) {
-                case KeyEvent.VK_UP:
-                    moveCreature(1, 1);
-                    break;
-                case KeyEvent.VK_DOWN:
-                    moveCreature(-1, -1);
-                    break;
-                case KeyEvent.VK_LEFT:
-                    moveCreature(2, -2);
-                    break;
-                case KeyEvent.VK_RIGHT:
-                    moveCreature(-2, 2);
-                    break;
-                default:
-                    break;
-            }
-        } catch (CommandExecException ex) {
-            Logger.getLogger(ControlCreatureByKeyboardFrame.class.getName()).log(Level.SEVERE, null, ex);
+                moveCreature(1, 1);
+                break;
+            case KeyEvent.VK_DOWN:
+
+                moveCreature(-1, -1);
+                break;
+            case KeyEvent.VK_LEFT:
+
+                moveCreature(2, -2);
+                break;
+            case KeyEvent.VK_RIGHT:
+
+                moveCreature(-2, 2);
+                break;
+            default:
+                break;
         }
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
-        if (e.getKeyCode() != KeyEvent.VK_UP && e.getKeyCode() != KeyEvent.VK_DOWN
-                && e.getKeyCode() != KeyEvent.VK_LEFT && e.getKeyCode() != KeyEvent.VK_RIGHT) {
-            return;
-        }
-
-        new SwingWorker<Void, Void>() {
-            @Override
-            protected Void doInBackground() throws Exception {
-                controlledCreature.move(0.01, 0.01, 0);
-                controlledCreature.stop();
-                controlledCreature = controlledCreature.updateState();
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                isStarted = false;
-            }
-        }.execute();
+        stopMovement();
     }
 
     private void moveCreature(double x, double y) {
-        new SwingWorker<Void, Void>() {
-            @Override
-            protected Void doInBackground() throws Exception {
-                controlledCreature.move(x, y, 0);
-                Thread.sleep(100);
-                controlledCreature = controlledCreature.updateState();
-                return null;
-            }
+        try {
+            // Move the creature directly
+            controlledCreature.move(x, y, 0);
+            controlledCreature = controlledCreature.updateState();
+            mainFrameController.updateThingsInVision();
 
-            @Override
-            protected void done() {
-                mainFrameController.updateThingsInVision();
+            var thingsInVision = controlledCreature.getThingsInVision();
+            System.out.println("Things perto na visão: " + thingsInVision.size());
+            for (Thing thing : thingsInVision) {
+                collectThingIfNear(controlledCreature, thing, COLLECTION_DISTANCE_THRESHOLD);
             }
-        }.execute();
+            
+            controlledCreature = controlledCreature.updateState();
+            
+        } catch (CommandExecException ex) {
+            Logger.getLogger(ControlCreatureByKeyboardFrame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void stopMovement() {
+        try {
+
+            controlledCreature.move(0, 0, 0);
+            controlledCreature.stop();
+            controlledCreature = controlledCreature.updateState();
+        } catch (CommandExecException ex) {
+            Logger.getLogger(ControlCreatureByKeyboardFrame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }
+
+    private void collectThingIfNear(Creature creature, Thing thing, double distanceThreshold) {
+    if (isNearThing(creature, thing, distanceThreshold)) {
+        try {
+            creature.putInSack(thing.getAttributes().getName());
+            creature.updateBag(); // Atualiza a bag após coletar o item
+            controlledCreature = creature.updateState();
+            mainFrameController.updateCreatureBag(controlledCreature);
+        } catch (CommandExecException e) {
+            System.err.println("Erro ao coletar o item: " + e.getMessage());
+        }
+    }
+}
+
+    private boolean isNearThing(Creature creature, Thing thing, double distanceThreshold) {
+        double distance = creature.calculateDistanceTo(thing);
+        System.out.println("Distância até o item " + thing.getAttributes().getName() + ": " + distance);
+        return distance < distanceThreshold;
     }
 }

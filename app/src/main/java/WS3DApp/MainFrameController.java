@@ -18,6 +18,7 @@ import ws3dproxy.WS3DProxy;
 import ws3dproxy.model.World;
 import javax.swing.*;
 import ws3dproxy.CommandExecException;
+import ws3dproxy.model.Bag;
 import ws3dproxy.model.Leaflet;
 import ws3dproxy.model.Thing;
 
@@ -27,6 +28,7 @@ public class MainFrameController {
     public Creature controlledCreature;
     private Map<String, String> creatureMap = new HashMap<>();
     private Map<String, List<Leaflet>> creatureLeaflets = new HashMap<>();
+    private Map<String, Bag> creatureBag = new HashMap<>();
     public World w;
     private KeyEvent actualKey;
     private MainFrame mainFrame;
@@ -45,9 +47,14 @@ public class MainFrameController {
                 System.out.println("Item selecionado: " + selectedItem + " com ID: " + id);
 
                 try {
+                    Thread.sleep(2000);
                     controlledCreature = proxy.getCreature(id);
+                    Thread.sleep(2000);
                     updateCreatureLeafletsList(controlledCreature);
+                    updateCreatureBagList(controlledCreature);
                 } catch (CommandExecException ex) {
+                    Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (InterruptedException ex) {
                     Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
@@ -55,14 +62,20 @@ public class MainFrameController {
 
         mainFrame.ControlCreatureByKeyboardButton.addActionListener((ActionEvent e) -> {
             if (controlledCreature != null) {
-                ControlCreatureByKeyboardFrame byKeyboardFrame = new ControlCreatureByKeyboardFrame(controlledCreature, this, mainFrame.ListObservableThings);
-                byKeyboardFrame.addWindowListener(new WindowAdapter() {
-                    @Override
-                    public void windowClosed(WindowEvent e) {
-                        byKeyboardFrame.dispose();
-                        System.out.println("Frame fechado.");
-                    }
-                });
+                try {
+                    w = proxy.getWorld();
+                    Thread.sleep(500);
+                    ControlCreatureByKeyboardFrame byKeyboardFrame = new ControlCreatureByKeyboardFrame(controlledCreature, this, mainFrame.ListObservableThings, w);
+                    byKeyboardFrame.addWindowListener(new WindowAdapter() {
+                        @Override
+                        public void windowClosed(WindowEvent e) {
+                            byKeyboardFrame.dispose();
+                            System.out.println("Frame fechado.");
+                        }
+                    });
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
+                }
             } else {
                 System.out.println("Nenhuma criatura selecionada.");
             }
@@ -130,6 +143,9 @@ public class MainFrameController {
         DefaultListModel<String> listModelLeaflets = new DefaultListModel<>();
         mainFrame.CreatureLeafletList.setModel(listModelLeaflets);
 
+        DefaultListModel<String> listModelBags = new DefaultListModel<>();
+        mainFrame.CreatureBagList.setModel(listModelBags);
+
         mainFrame.setVisible(true);
     }
 
@@ -167,11 +183,37 @@ public class MainFrameController {
         }
     }
 
+    public void updateCreatureBag(Creature creature) {
+        creature.updateBag(); // Garante que a bag seja atualizada
+        System.out.println("Item coletado, bag: " + creature.getBag());
+        creatureBag.put(creature.getName(), creature.getBag());
+        updateCreatureBagList(creature);
+    }
+
+    private void updateCreatureBagList(Creature creature) {
+        DefaultListModel<String> listModel = (DefaultListModel<String>) mainFrame.CreatureBagList.getModel();
+        listModel.clear();
+
+        Bag bag = creatureBag.get(creature.getName());
+
+        if (bag == null) {
+            System.err.println("A bag está nula.");
+            return;
+        }
+
+        listModel.addElement("Total de comida: " + bag.getTotalNumberFood());
+        listModel.addElement("Comidas perecíveis: " + bag.getNumberPFood());
+        listModel.addElement("Comidas não perecíveis: " + bag.getNumberNPFood());
+        listModel.addElement("Total de cristais: " + bag.getTotalNumberCrystals());
+    }
+
     public void assignLeafletToCreature(String jewelColor, int quantity, int payment, String creatureName) {
         String creatureID = creatureMap.get(creatureName);
 
         try {
+            Thread.sleep(2000);
             Creature c = proxy.getCreature(creatureID);
+            Thread.sleep(2000);
             HashMap<String, Integer[]> mapObjective = new HashMap<>();
             mapObjective.put(jewelColor, new Integer[]{quantity, 0});
 
@@ -189,6 +231,8 @@ public class MainFrameController {
             updateCreatureLeafletsList(c);
 
         } catch (CommandExecException ex) {
+            Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InterruptedException ex) {
             Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -274,5 +318,4 @@ public class MainFrameController {
             System.out.println("Erro capturado");
         }
     }
-
 }
