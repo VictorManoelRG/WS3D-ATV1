@@ -37,18 +37,24 @@ public class CreateCreatureFrame extends javax.swing.JFrame {
         setMinimumSize(null);
         setResizable(false);
 
-        LabelCreateCoordinates.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        LabelCreateCoordinates.setText("jLabel1");
+        LabelCreateCoordinates.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        LabelCreateCoordinates.setText("Insira as coordenadas:");
         LabelCreateCoordinates.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
 
-        CreateCreatureButton.setText("CreateCreature");
+        CreateCreatureButton.setText("Criar Criatura");
         CreateCreatureButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        CreateCreatureButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                CreateCreatureButtonActionPerformed(evt);
+            }
+        });
 
         jLabel1.setText("Coordenada X");
 
         jLabel2.setText("Coordenada Y");
 
-        CoordinateX.setText("coordenada");
+        CoordinateX.setColumns(5);
+        CoordinateX.setText("100");
         CoordinateX.setToolTipText("");
         CoordinateX.setMaximumSize(new java.awt.Dimension(82, 23));
         CoordinateX.setMinimumSize(new java.awt.Dimension(75, 23));
@@ -58,7 +64,8 @@ public class CreateCreatureFrame extends javax.swing.JFrame {
             }
         });
 
-        CoordinateY.setText("coordenada");
+        CoordinateY.setColumns(5);
+        CoordinateY.setText("100");
         CoordinateY.setToolTipText("");
         CoordinateY.setMaximumSize(new java.awt.Dimension(82, 23));
         CoordinateY.setMinimumSize(new java.awt.Dimension(75, 23));
@@ -73,25 +80,20 @@ public class CreateCreatureFrame extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(146, 146, 146)
-                        .addComponent(LabelCreateCoordinates))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(51, 51, 51)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel1)
-                                .addGap(48, 48, 48)
-                                .addComponent(CoordinateX, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel2)
-                                .addGap(48, 48, 48)
-                                .addComponent(CoordinateY, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(99, 99, 99)
-                        .addComponent(CreateCreatureButton)))
-                .addGap(70, 70, 70))
+                .addGap(57, 57, 57)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(LabelCreateCoordinates)
+                    .addComponent(CreateCreatureButton)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(jLabel2)
+                            .addGap(48, 48, 48)
+                            .addComponent(CoordinateY, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(jLabel1)
+                            .addGap(48, 48, 48)
+                            .addComponent(CoordinateX, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(69, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -122,6 +124,10 @@ public class CreateCreatureFrame extends javax.swing.JFrame {
     private void CoordinateYActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CoordinateYActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_CoordinateYActionPerformed
+
+    private void CreateCreatureButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CreateCreatureButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_CreateCreatureButtonActionPerformed
 
     /**
      * @param args the command line arguments
