@@ -50,14 +50,13 @@ public class MainFrameController {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 String selectedItem = mainFrame.CreatureList.getSelectedItem().toString();
                 String id = creatureMap.get(selectedItem);
-                System.out.println("Item selecionado: " + selectedItem + " com ID: " + id);
 
                 try {
-                    Thread.sleep(2000);
                     controlledCreature = proxy.getCreature(id);
                     Thread.sleep(2000);
                     updateCreatureLeafletsList(controlledCreature);
                     updateCreatureBagList(controlledCreature);
+                    updateOtherCreatureInfos(controlledCreature);
                 } catch (CommandExecException ex) {
                     Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (InterruptedException ex) {
@@ -70,8 +69,10 @@ public class MainFrameController {
             if (controlledCreature != null) {
                 try {
                     w = proxy.getWorld();
-                    Thread.sleep(500);
-                    ControlCreatureByKeyboardFrame byKeyboardFrame = new ControlCreatureByKeyboardFrame(controlledCreature, this, mainFrame.ListObservableThings, w);
+                    Thread.sleep(1000);
+                    var c = proxy.getCreature(creatureMap.get(mainFrame.CreatureList.getSelectedItem()));
+                    Thread.sleep(1000);
+                    ControlCreatureByKeyboardFrame byKeyboardFrame = new ControlCreatureByKeyboardFrame(c, this, mainFrame.ListObservableThings, w);
                     byKeyboardFrame.addWindowListener(new WindowAdapter() {
                         @Override
                         public void windowClosed(WindowEvent e) {
@@ -80,6 +81,8 @@ public class MainFrameController {
                         }
                     });
                 } catch (InterruptedException ex) {
+                    Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (CommandExecException ex) {
                     Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
                 }
             } else {
@@ -336,7 +339,7 @@ public class MainFrameController {
 
         try {
             Creature c = proxy.getCreature(creatureID);
-            Thread.sleep(2000);
+            Thread.sleep(500);
             HashMap<String, Integer[]> mapObjective = new HashMap<>();
 
             if (quantityRed > 0) {
@@ -473,6 +476,15 @@ public class MainFrameController {
     }
 
     public void setCreatureEnergy(double energy) {
-        mainFrame.CreatureEnergy.setText(String.valueOf((int) Math.floor(energy)));
+        SwingUtilities.invokeLater(() -> {
+            mainFrame.CreatureEnergy.setText(String.valueOf((int) Math.floor(energy)));
+        });
+    }
+
+    private void updateOtherCreatureInfos(Creature creature) {
+        SwingUtilities.invokeLater(() -> {
+            mainFrame.CreatureTotalPoints.setText(creaturePoints.get(creature.getName()).toString());
+            setCreatureEnergy(creature.getFuel());
+        });
     }
 }

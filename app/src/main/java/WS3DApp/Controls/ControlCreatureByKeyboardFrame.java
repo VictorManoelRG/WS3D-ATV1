@@ -139,7 +139,7 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
             try {
                 controlledCreature.move(0, 0, 0);
                 controlledCreature.stop();
-                Thread.sleep(2000);
+                Thread.sleep(500);
             } catch (CommandExecException ex) {
                 Logger.getLogger(ControlCreatureByKeyboardFrame.class.getName()).log(Level.SEVERE, null, ex);
             } catch (InterruptedException ex) {
