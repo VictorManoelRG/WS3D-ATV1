@@ -183,10 +183,40 @@ public class MainFrameController {
         }
     }
 
-    public void updateCreatureBag(Creature creature) {
+    public void canDeliverLeaflet(Creature creature) {
+        var leaflets = creatureLeaflets.get(creature.getName());
+        
+        for(var leaflet : leaflets){
+            System.out.println(leaflet.toString());
+            if(leaflet.isCompleted()){        
+                System.err.println(leaflet.getPayment());
+            }
+        }
+    }
+
+    public void updateCreatureBag(Creature creature, String color) {
         creature.updateBag(); // Garante que a bag seja atualizada
         System.out.println("Item coletado, bag: " + creature.getBag());
         creatureBag.put(creature.getName(), creature.getBag());
+        var leaflets = creature.getLeaflets();
+
+        for (var leaflet : leaflets) {
+            var itemsMap = leaflet.getItems();
+
+            if (itemsMap.containsKey(color)) {
+
+                Integer[] counts = itemsMap.get(color);
+                if(counts[0]==counts[1]){
+                    continue;
+                }
+                counts[1] += 1;
+
+                itemsMap.put(color, counts);
+            }
+            leaflet.setItems(itemsMap);
+        }
+        
+        creatureLeaflets.put(creature.getName(), leaflets);
         updateCreatureBagList(creature);
     }
 
@@ -314,8 +344,19 @@ public class MainFrameController {
         try {
             w = World.getInstance();
             w.reset();
+
+            double worldWidth = w.getEnvironmentWidth();
+            double worldHeight = w.getEnvironmentHeight();
+
+            double randomX = Math.random() * worldWidth;
+            double randomY = Math.random() * worldHeight;
+
+            w.createDeliverySpot(300, 300);
+            w = proxy.getWorld();
+
+            System.out.println("DeliverySpot criado em: (" + randomX + ", " + randomY + ")");
         } catch (Exception e) {
-            System.out.println("Erro capturado");
+            System.out.println("Erro capturado: " + e.getMessage());
         }
     }
 }
