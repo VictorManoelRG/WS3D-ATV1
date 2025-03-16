@@ -45,11 +45,17 @@ public class CreateLeafletFrameController {
     private void createLeaflet_ButtonClick() {
 
         try {
-            int quantity = Integer.parseInt(createLeafletFrame.NumberOfJewels.getText());
             int payment = Integer.parseInt(createLeafletFrame.Payment.getText());
-            String color = createLeafletFrame.ComboboxJewelColor.getSelectedItem().toString();
+            int colorRedQuantity = Integer.parseInt(createLeafletFrame.NumberOfRedJewels.getText());
+            int colorGreenQuantity = Integer.parseInt(createLeafletFrame.NumberOfGreenJewels.getText());
+            int colorBlueQuantity = Integer.parseInt(createLeafletFrame.NumberOfBlueJewels.getText());
+            int colorYellowQuantity = Integer.parseInt(createLeafletFrame.NumberOfYellowJewels.getText());
+            int colorMagentaQuantity = Integer.parseInt(createLeafletFrame.NumberOfMagentaJewels.getText());
+            int colorWhiteQuantity = Integer.parseInt(createLeafletFrame.NumberOfWhiteJewels.getText());
+
             String creature = createLeafletFrame.ComboboxCreatureAssign.getSelectedItem().toString();
-            mainFrameController.assignLeafletToCreature(color, quantity, payment, creature);
+            mainFrameController.assignLeafletToCreature("Red", colorRedQuantity, "Green", colorGreenQuantity, "Blue", colorBlueQuantity,
+                    "Yellow", colorYellowQuantity, "Magenta", colorMagentaQuantity, "White", colorWhiteQuantity, payment, creature);
             createLeafletFrame.setVisible(false);
             createLeafletFrame.dispose();
         } catch (NumberFormatException ex) {

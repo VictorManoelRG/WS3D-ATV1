@@ -175,16 +175,24 @@ public class MainFrameController {
         }
 
         for (var item : leaflets) {
-            if(item.getSituation()!=0){
+            if (item.getSituation() != 0) {
                 continue;
             }
-            Integer[] valores = item.getItems().values().iterator().next();
+
+            StringBuilder jewelInfo = new StringBuilder();
+
+            for (var entry : item.getItems().entrySet()) {
+                String jewelType = entry.getKey();
+                Integer[] valores = entry.getValue();
+                jewelInfo.append(" Tipo: ").append(jewelType)
+                        .append(" Meta: ").append(valores[0])
+                        .append(" Acumulados: ").append(valores[1])
+                        .append(" | ");
+            }
 
             listModel.addElement("Id: " + item.getID()
-                    + " Tipo de Jewel: " + item.getItems().keySet()
-                    + " Meta: " + valores[0]
-                    + " Acumulados: " + valores[1]
-                    + " Pagamento: " + item.getPayment());
+                    + " Pagamento: " + item.getPayment()
+                    + " | " + jewelInfo.toString());
         }
     }
 
@@ -195,31 +203,23 @@ public class MainFrameController {
             if (leaflet.getSituation() == 1) {
                 continue;
             }
-            
+
             if (leaflet.isCompleted()) {
                 creaturePoints.put(creature.getName(), creaturePoints.get(creature.getName()) + leaflet.getPayment());
                 leaflet.setSituation(1);
                 if (controlledCreature.getName().equals(creature.getName())) {
                     mainFrame.CreatureTotalPoints.setText(creaturePoints.get(controlledCreature.getName()).toString());
                 }
+                updateCreatureLeafletsList(creature);
             }
-        }
-    }
-    
-    public void printAllLeaflets(Creature creature){
-        var leaflets = creature.getLeaflets();
-        
-        for(var leaflet : leaflets){
-            System.out.println(leaflet);
         }
     }
 
     public void updateCreatureBag(Creature creature, String color) {
-        creature.updateBag(); 
+        creature.updateBag();
         System.out.println("Item coletado, bag: " + creature.getBag());
         creatureBag.put(creature.getName(), creature.getBag());
         var leaflets = creatureLeaflets.get(creature.getName());
-        printAllLeaflets(creature);
 
         for (var leaflet : leaflets) {
             var itemsMap = leaflet.getItems();
@@ -265,15 +265,35 @@ public class MainFrameController {
         listModel.addElement("Total de cristais brancos: " + bag.getNumberCrystalPerType(Constants.colorWHITE));
     }
 
-    public void assignLeafletToCreature(String jewelColor, int quantity, int payment, String creatureName) {
+    public void assignLeafletToCreature(String jewelRed, int quantityRed, String jewelGreen, int quantityGreen,
+            String jewelBlue, int quantityBlue, String jewelYellow, int quantityYellow, String jewelMagenta, int quantityMagenta,
+            String jewelWhite, int quantityWhite, int payment, String creatureName) {
+
         String creatureID = creatureMap.get(creatureName);
 
         try {
-            Thread.sleep(2000);
             Creature c = proxy.getCreature(creatureID);
             Thread.sleep(2000);
             HashMap<String, Integer[]> mapObjective = new HashMap<>();
-            mapObjective.put(jewelColor, new Integer[]{quantity, 0});
+
+            if (quantityRed > 0) {
+                mapObjective.put(jewelRed, new Integer[]{quantityRed, 0});
+            }
+            if (quantityGreen > 0) {
+                mapObjective.put(jewelGreen, new Integer[]{quantityGreen, 0});
+            }
+            if (quantityBlue > 0) {
+                mapObjective.put(jewelBlue, new Integer[]{quantityBlue, 0});
+            }
+            if (quantityYellow > 0) {
+                mapObjective.put(jewelYellow, new Integer[]{quantityYellow, 0});
+            }
+            if (quantityMagenta > 0) {
+                mapObjective.put(jewelMagenta, new Integer[]{quantityMagenta, 0});
+            }
+            if (quantityWhite > 0) {
+                mapObjective.put(jewelWhite, new Integer[]{quantityWhite, 0});
+            }
 
             long leafletID;
             Random random = new Random();
@@ -283,15 +303,13 @@ public class MainFrameController {
 
             Leaflet l = new Leaflet(leafletID, mapObjective, payment, 0);
             c.addLeaflet(l);
-            System.out.println("adicionando novo leaflet: " +l);
+            System.out.println("adicionando novo leaflet: " + l);
 
             creatureLeaflets.computeIfAbsent(c.getName(), k -> new ArrayList<>()).add(l);
 
             updateCreatureLeafletsList(c);
 
-        } catch (CommandExecException ex) {
-            Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InterruptedException ex) {
+        } catch (CommandExecException | InterruptedException ex) {
             Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -354,7 +372,6 @@ public class MainFrameController {
 
             creatureMap.put(c.getName(), c.getIndex());
             creaturePoints.put(c.getName(), 0);
-            printAllLeaflets(c);
 
             SwingUtilities.invokeLater(() -> {
                 mainFrame.CreatureList.addItem(c.getName());
