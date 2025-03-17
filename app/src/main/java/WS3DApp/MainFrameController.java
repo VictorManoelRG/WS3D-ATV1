@@ -286,23 +286,26 @@ public class MainFrameController {
         creatureBag.put(creature.getName(), creature.getBag());
         var leaflets = creatureLeaflets.get(creature.getName());
 
-        for (var leaflet : leaflets) {
-            var itemsMap = leaflet.getItems();
+        if (leaflets != null) {
+            for (var leaflet : leaflets) {
+                var itemsMap = leaflet.getItems();
 
-            if (itemsMap.containsKey(color)) {
+                if (itemsMap.containsKey(color)) {
 
-                Integer[] counts = itemsMap.get(color);
-                if (counts[0] == counts[1]) {
-                    continue;
+                    Integer[] counts = itemsMap.get(color);
+                    if (counts[0] == counts[1]) {
+                        continue;
+                    }
+                    counts[1] += 1;
+
+                    itemsMap.put(color, counts);
                 }
-                counts[1] += 1;
-
-                itemsMap.put(color, counts);
+                leaflet.setItems(itemsMap);
             }
-            leaflet.setItems(itemsMap);
+            creatureLeaflets.put(creature.getName(), leaflets);
         }
 
-        creatureLeaflets.put(creature.getName(), leaflets);
+        
         updateCreatureBagList(creature);
         updateCreatureLeafletsList(creature);
     }

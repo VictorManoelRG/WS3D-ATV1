@@ -1,6 +1,9 @@
 package WS3DApp.Controls;
 
 import WS3DApp.MainFrameController;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import javax.swing.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -30,8 +33,10 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
     public ControlCreatureByKeyboardFrame(Creature creature, MainFrameController controller, JList<String> list, World w) {
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setSize(500, 500);
-        this.setLayout(null);
+        this.setLayout(new GridBagLayout());
+        addJLabel();
         this.addKeyListener(this);
+        
         controlledCreature = creature;
         ListObservableThings = list;
         mainFrameController = controller;
@@ -47,6 +52,13 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
         });
 
         this.setVisible(true);
+    }
+    
+    private void addJLabel(){
+        JLabel label = new JLabel("Controle a criatura pelo teclado");
+        label.setFont(new Font("Arial", Font.BOLD, 16));
+
+        this.add(label, new GridBagConstraints());
     }
 
     @Override
@@ -95,9 +107,7 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
             mainFrameController.updateThingsInVision();
 
             var thingsInVision = new ArrayList<>(controlledCreature.getThingsInVision());
-            Iterator<Thing> iterator = thingsInVision.iterator();
-            while (iterator.hasNext()) {
-                Thing thing = iterator.next();
+            for (Thing thing : thingsInVision) {
                 mainFrameController.collectThingIfNear(controlledCreature, thing);
             }
 
@@ -125,6 +135,7 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
 
     private void updateFuelDisplay() {
         SwingUtilities.invokeLater(() -> {
+            controlledCreature = controlledCreature.updateState();
             double energy = controlledCreature.getFuel();
             mainFrameController.setCreatureEnergy(energy);
         });
@@ -146,7 +157,5 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
                 Logger.getLogger(ControlCreatureByKeyboardFrame.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
-        System.out.println("Frame fechado e recursos liberados.");
     }
 }
