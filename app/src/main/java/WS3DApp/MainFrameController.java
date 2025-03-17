@@ -77,7 +77,6 @@ public class MainFrameController {
                         @Override
                         public void windowClosed(WindowEvent e) {
                             byKeyboardFrame.dispose();
-                            System.out.println("Frame fechado.");
                         }
                     });
                 } catch (InterruptedException ex) {
@@ -85,8 +84,6 @@ public class MainFrameController {
                 } catch (CommandExecException ex) {
                     Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
                 }
-            } else {
-                System.out.println("Nenhuma criatura selecionada.");
             }
         });
 
@@ -178,7 +175,6 @@ public class MainFrameController {
                         creature.eatIt(thing.getName());
                         creature = creature.updateState();
                         Thread.sleep(500);
-                        System.out.println("combustivel: " + creature.getFuel());
                         controlledCreature = creature.updateState();
                     }
                     case Constants.categoryJEWEL -> {
@@ -231,7 +227,6 @@ public class MainFrameController {
         List<Leaflet> leaflets = creatureLeaflets.get(c.getName());
 
         if (leaflets == null) {
-            System.out.println("Nenhum leaflet encontrado para: " + c.getName());
             return;
         }
 
@@ -282,7 +277,6 @@ public class MainFrameController {
 
     public void updateCreatureBag(Creature creature, String color) {
         creature.updateBag();
-        System.out.println("Item coletado, bag: " + creature.getBag());
         creatureBag.put(creature.getName(), creature.getBag());
         var leaflets = creatureLeaflets.get(creature.getName());
 
@@ -305,7 +299,6 @@ public class MainFrameController {
             creatureLeaflets.put(creature.getName(), leaflets);
         }
 
-        
         updateCreatureBagList(creature);
         updateCreatureLeafletsList(creature);
     }
@@ -317,11 +310,9 @@ public class MainFrameController {
         Bag bag = creatureBag.get(creature.getName());
 
         if (bag == null) {
-            System.err.println("A bag está nula.");
             return;
         }
 
-        System.out.println("acessou bag");
         listModel.addElement("Total de comida: " + bag.getTotalNumberFood());
         listModel.addElement("Comidas perecíveis: " + bag.getNumberPFood());
         listModel.addElement("Comidas não perecíveis: " + bag.getNumberNPFood());
@@ -372,7 +363,6 @@ public class MainFrameController {
 
             Leaflet l = new Leaflet(leafletID, mapObjective, payment, 0);
             c.addLeaflet(l);
-            System.out.println("adicionando novo leaflet: " + l);
 
             creatureLeaflets.computeIfAbsent(c.getName(), k -> new ArrayList<>()).add(l);
 
@@ -437,7 +427,6 @@ public class MainFrameController {
     public void createNewCreature(double coordinateX, double coordinateY) {
         try {
             Creature c = proxy.createCreature(coordinateX, coordinateY, 0);
-            System.out.println("Criatura criada com nome: " + c.getName() + " com ID: " + c.getIndex());
 
             creatureMap.put(c.getName(), c.getIndex());
             creaturePoints.put(c.getName(), 0);
@@ -447,8 +436,6 @@ public class MainFrameController {
                 mainFrame.CreatureList.setSelectedItem(c.getName());
                 mainFrame.CreatureTotalPoints.setText(creaturePoints.get(c.getName()).toString());
             });
-
-            System.out.println("Criatura adicionada: " + c.getName());
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(null,
                     "Não foi possível criar a criatura.",
@@ -458,7 +445,6 @@ public class MainFrameController {
     }
 
     private void createWorld() {
-        WS3DProxy proxy = new WS3DProxy();
         try {
             w = World.getInstance();
             w.reset();
@@ -471,10 +457,7 @@ public class MainFrameController {
 
             w.createDeliverySpot(300, 300);
             w = proxy.getWorld();
-
-            System.out.println("DeliverySpot criado em: (" + randomX + ", " + randomY + ")");
-        } catch (Exception e) {
-            System.out.println("Erro capturado: " + e.getMessage());
+        } catch (CommandExecException e) {
         }
     }
 
