@@ -32,7 +32,7 @@ public class MainFrameController {
     private WS3DProxy proxy = new WS3DProxy();
     public Creature controlledCreature;
     private Map<String, String> creatureMap = new HashMap<>();
-    private Map<String, List<Leaflet>> creatureLeaflets = new HashMap<>();
+    //private Map<String, List<Leaflet>> creatureLeaflets = new HashMap<>();
     private Map<String, Bag> creatureBag = new HashMap<>();
     private Map<String, Integer> creaturePoints = new HashMap<>();
     public World w;
@@ -224,7 +224,7 @@ public class MainFrameController {
         DefaultListModel<String> listModel = (DefaultListModel<String>) mainFrame.CreatureLeafletList.getModel();
         listModel.clear();
 
-        List<Leaflet> leaflets = creatureLeaflets.get(c.getName());
+        List<Leaflet> leaflets = c.getLeaflets();
 
         if (leaflets == null) {
             return;
@@ -253,7 +253,7 @@ public class MainFrameController {
     }
 
     public void canDeliverLeaflet(Creature creature) {
-        var leaflets = creatureLeaflets.get(creature.getName());
+        var leaflets = creature.getLeaflets();
 
         if (leaflets == null) {
             return;
@@ -267,8 +267,15 @@ public class MainFrameController {
             if (leaflet.isCompleted()) {
                 creaturePoints.put(creature.getName(), creaturePoints.get(creature.getName()) + leaflet.getPayment());
                 leaflet.setSituation(1);
+                creature.updateLeaflet(leaflet.getID(), leaflet.getItems(), leaflet.getSituation());
+                int totalPayment = 0;
+                for (var auxLeaflet : creature.getLeaflets()) {
+                    if (auxLeaflet.isCompleted()) {
+                        totalPayment += auxLeaflet.getPayment();
+                    }
+                }
                 if (controlledCreature.getName().equals(creature.getName())) {
-                    mainFrame.CreatureTotalPoints.setText(creaturePoints.get(controlledCreature.getName()).toString());
+                    mainFrame.CreatureTotalPoints.setText(String.valueOf(totalPayment));
                 }
                 updateCreatureLeafletsList(creature);
             }
@@ -278,7 +285,7 @@ public class MainFrameController {
     public void updateCreatureBag(Creature creature, String color) {
         creature.updateBag();
         creatureBag.put(creature.getName(), creature.getBag());
-        var leaflets = creatureLeaflets.get(creature.getName());
+        var leaflets = creature.getLeaflets();
 
         if (leaflets != null) {
             for (var leaflet : leaflets) {
@@ -295,8 +302,9 @@ public class MainFrameController {
                     itemsMap.put(color, counts);
                 }
                 leaflet.setItems(itemsMap);
+                creature.updateLeaflet(leaflet.getID(), leaflet.getItems(), leaflet.getSituation());
             }
-            creatureLeaflets.put(creature.getName(), leaflets);
+            //creatureLeaflets.put(creature.getName(), leaflets);
         }
 
         updateCreatureBagList(creature);
@@ -364,8 +372,7 @@ public class MainFrameController {
             Leaflet l = new Leaflet(leafletID, mapObjective, payment, 0);
             c.addLeaflet(l);
 
-            creatureLeaflets.computeIfAbsent(c.getName(), k -> new ArrayList<>()).add(l);
-
+            //creatureLeaflets.computeIfAbsent(c.getName(), k -> new ArrayList<>()).add(l);
             updateCreatureLeafletsList(c);
 
         } catch (CommandExecException | InterruptedException ex) {
