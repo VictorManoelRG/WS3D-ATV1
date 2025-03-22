@@ -9,10 +9,12 @@ import ws3dproxy.model.Creature;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import ws3dproxy.WS3DProxy;
@@ -23,6 +25,7 @@ import ws3dproxy.model.Bag;
 import ws3dproxy.model.Leaflet;
 import ws3dproxy.model.Thing;
 import ws3dproxy.util.Constants;
+import ws3dproxy.model.WorldPoint;
 
 public class MainFrameController {
 
@@ -32,6 +35,7 @@ public class MainFrameController {
     private WS3DProxy proxy = new WS3DProxy();
     public Creature controlledCreature;
     private Map<String, String> creatureMap = new HashMap<>();
+    private Set<Long> createdItems = new HashSet<>();
     //private Map<String, List<Leaflet>> creatureLeaflets = new HashMap<>();
     private Map<String, Bag> creatureBag = new HashMap<>();
     private Map<String, Integer> creaturePoints = new HashMap<>();
@@ -265,19 +269,27 @@ public class MainFrameController {
             }
 
             if (leaflet.isCompleted()) {
-                creaturePoints.put(creature.getName(), creaturePoints.get(creature.getName()) + leaflet.getPayment());
-                leaflet.setSituation(1);
-                creature.updateLeaflet(leaflet.getID(), leaflet.getItems(), leaflet.getSituation());
-                int totalPayment = 0;
-                for (var auxLeaflet : creature.getLeaflets()) {
-                    if (auxLeaflet.isCompleted()) {
-                        totalPayment += auxLeaflet.getPayment();
+                try {
+                    creaturePoints.put(creature.getName(), creaturePoints.get(creature.getName()) + leaflet.getPayment());
+                    creature.deliverLeaflet(leaflet.getID().toString());
+                    leaflet.setSituation(1);
+                    creature.updateLeaflet(leaflet.getID(), leaflet.getItems(), leaflet.getSituation());
+                    creature = creature.updateState();
+
+                    int totalPayment = 0;
+                    for (var auxLeaflet : creature.getLeaflets()) {
+                        if (auxLeaflet.getSituation() == 1) {
+                            totalPayment += auxLeaflet.getPayment();
+                        }
                     }
+                    if (controlledCreature.getName().equals(creature.getName())) {
+                        mainFrame.CreatureTotalPoints.setText(String.valueOf(totalPayment));
+                    }
+
+                    updateCreatureLeafletsList(creature);
+                } catch (CommandExecException ex) {
+                    Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                if (controlledCreature.getName().equals(creature.getName())) {
-                    mainFrame.CreatureTotalPoints.setText(String.valueOf(totalPayment));
-                }
-                updateCreatureLeafletsList(creature);
             }
         }
     }
@@ -304,7 +316,6 @@ public class MainFrameController {
                 leaflet.setItems(itemsMap);
                 creature.updateLeaflet(leaflet.getID(), leaflet.getItems(), leaflet.getSituation());
             }
-            //creatureLeaflets.put(creature.getName(), leaflets);
         }
 
         updateCreatureBagList(creature);
@@ -372,9 +383,9 @@ public class MainFrameController {
             Leaflet l = new Leaflet(leafletID, mapObjective, payment, 0);
             c.addLeaflet(l);
 
-            //creatureLeaflets.computeIfAbsent(c.getName(), k -> new ArrayList<>()).add(l);
+            c = c.updateState();
+            createCreatureLeafletMetaInRandomPositions(c.getLeaflets());
             updateCreatureLeafletsList(c);
-
         } catch (CommandExecException | InterruptedException ex) {
             Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -437,6 +448,7 @@ public class MainFrameController {
 
             creatureMap.put(c.getName(), c.getIndex());
             creaturePoints.put(c.getName(), 0);
+            createCreatureLeafletMetaInRandomPositions(c.getLeaflets());
 
             SwingUtilities.invokeLater(() -> {
                 mainFrame.CreatureList.addItem(c.getName());
@@ -479,5 +491,71 @@ public class MainFrameController {
             mainFrame.CreatureTotalPoints.setText(creaturePoints.get(creature.getName()).toString());
             setCreatureEnergy(creature.getFuel());
         });
+    }
+
+    private void createCreatureLeafletMetaInRandomPositions(List<Leaflet> leaflets) {
+        for (var item : leaflets) {
+            for (var mapEntry : item.getItems().entrySet()) {
+                String color = mapEntry.getKey();
+                Integer numMeta = mapEntry.getValue()[0];
+
+                int type = 0;
+                switch (color) {
+                    case "Red" ->
+                        type = 0;
+                    case "Green" ->
+                        type = 1;
+                    case "Blue" ->
+                        type = 2;
+                    case "Yellow" ->
+                        type = 3;
+                    case "Magenta" ->
+                        type = 4;
+                    case "White" ->
+                        type = 5;
+                    default -> {
+                    }
+                }
+
+                for (int i = 0; i < numMeta; i++) {
+                    double[] randomPosition = getRandomPosition();
+
+                    if (!createdItems.contains(item.getID())) {
+                        createJewel(type, randomPosition[0], randomPosition[1]);
+                    }
+                }
+            }
+
+            createdItems.add(item.getID());
+        }
+    }
+
+    private double[] getRandomPosition() {
+        Random random = new Random();
+        double x, y;
+        boolean isPositionValid;
+
+        List<Thing> things = w.getEveryThing();
+
+        do {
+            x = random.nextDouble() * w.getEnvironmentWidth();
+            y = random.nextDouble() * w.getEnvironmentHeight();
+
+            isPositionValid = true;
+            for (Thing thing : things) {
+                WorldPoint[] vertices = thing.getVertex();
+                double x1 = vertices[0].getX();
+                double y1 = vertices[0].getY();
+                double x2 = vertices[3].getX();
+                double y2 = vertices[3].getY();
+
+                if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
+                    isPositionValid = false;
+                    break;
+                }
+            }
+        } while (!isPositionValid);
+
+        return new double[]{x, y};
     }
 }
