@@ -22,7 +22,7 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
     private static final double COLLECTION_DISTANCE_THRESHOLD_DELIVERY_SPOT = 85.0;
     private static final double STOPPED_THRESHOLD = 0.1;
 
-    private Creature controlledCreature;
+    public Creature controlledCreature;
     private boolean isStarted = false;
     private JList<String> ListObservableThings;
     private MainFrameController mainFrameController;
@@ -56,7 +56,7 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
     
     private void addJLabel(){
         JLabel label = new JLabel("Controle a criatura pelo teclado");
-        label.setFont(new Font("Arial", Font.BOLD, 16));
+        label.setFont(new Font("Arial", Font.BOLD, 15));
 
         this.add(label, new GridBagConstraints());
     }
@@ -79,16 +79,16 @@ public class ControlCreatureByKeyboardFrame extends JFrame implements KeyListene
         int keyCode = e.getKeyCode();
         switch (keyCode) {
             case KeyEvent.VK_UP:
-                moveCreature(3, 3);
+                moveCreature(5, 5);
                 break;
             case KeyEvent.VK_DOWN:
-                moveCreature(-3, -3);
+                moveCreature(-5, -5);
                 break;
             case KeyEvent.VK_LEFT:
-                moveCreature(2, -2);
+                moveCreature(5, -5);
                 break;
             case KeyEvent.VK_RIGHT:
-                moveCreature(-2, 2);
+                moveCreature(-5, 5);
                 break;
             default:
                 break;

@@ -30,18 +30,21 @@ import ws3dproxy.model.WorldPoint;
 public class MainFrameController {
 
     private static final double COLLECTION_DISTANCE_THRESHOLD_JEWEL = 20.0;
-    private static final double COLLECTION_DISTANCE_THRESHOLD_DELIVERY_SPOT = 85.0;
+    private static final double COLLECTION_DISTANCE_THRESHOLD_DELIVERY_SPOT = 65.0;
 
     private WS3DProxy proxy = new WS3DProxy();
     public Creature controlledCreature;
     private Map<String, String> creatureMap = new HashMap<>();
     private Set<Long> createdItems = new HashSet<>();
     //private Map<String, List<Leaflet>> creatureLeaflets = new HashMap<>();
-    private Map<String, Bag> creatureBag = new HashMap<>();
     private Map<String, Integer> creaturePoints = new HashMap<>();
     public World w;
     private KeyEvent actualKey;
     private MainFrame mainFrame;
+    private ControlCreatureByKeyboardFrame byKeyboardFrame;
+    private Set<Long> completedLeaflets = new HashSet<>();
+    private int lastTotalCrystalsQuantity = Integer.MIN_VALUE;
+    private final Set<String> collectedJewels = new HashSet<>();
 
     public MainFrameController() {
         createWorld();
@@ -76,7 +79,7 @@ public class MainFrameController {
                     Thread.sleep(1000);
                     var c = proxy.getCreature(creatureMap.get(mainFrame.CreatureList.getSelectedItem()));
                     Thread.sleep(1000);
-                    ControlCreatureByKeyboardFrame byKeyboardFrame = new ControlCreatureByKeyboardFrame(c, this, mainFrame.ListObservableThings, w);
+                    byKeyboardFrame = new ControlCreatureByKeyboardFrame(c, this, mainFrame.ListObservableThings, w);
                     byKeyboardFrame.addWindowListener(new WindowAdapter() {
                         @Override
                         public void windowClosed(WindowEvent e) {
@@ -171,28 +174,39 @@ public class MainFrameController {
 
     public void collectThingIfNear(Creature creature, Thing thing) {
         if (isNearThing(creature, thing)) {
+            String thingId = thing.getAttributes().getName();
+
+            // Se a criatura já coletou essa joia, não faz nada
+            if (thing.getAttributes().getCategory() == Constants.categoryJEWEL && collectedJewels.contains(thingId)) {
+                return;
+            }
+
             try {
                 switch (thing.getAttributes().getCategory()) {
                     case Constants.categoryDeliverySPOT ->
                         canDeliverLeaflet(creature);
                     case Constants.categoryPFOOD, Constants.categoryNPFOOD -> {
-                        creature.eatIt(thing.getName());
+                        creature.eatIt(thingId);
                         creature = creature.updateState();
                         Thread.sleep(500);
-                        controlledCreature = creature.updateState();
                     }
                     case Constants.categoryJEWEL -> {
+                        collectedJewels.add(thingId); // Marca como coletada
                         creature.updateBag();
-                        creature.putInSack(thing.getAttributes().getName());
+                        creature.putInSack(thingId);
                         Thread.sleep(500);
                         creature.updateBag();
-
                         updateCreatureBag(controlledCreature, thing.getAttributes().getColor());
                     }
                     default -> {
                     }
                 }
+
                 controlledCreature = creature.updateState();
+                if (byKeyboardFrame != null) {
+                    byKeyboardFrame.controlledCreature = controlledCreature;
+                }
+
             } catch (CommandExecException e) {
                 System.err.println("Erro ao coletar o item: " + e.getMessage());
             } catch (InterruptedException ex) {
@@ -235,10 +249,9 @@ public class MainFrameController {
         }
 
         for (var item : leaflets) {
-            if (item.getSituation() != 0) {
+            if (completedLeaflets.contains(item.getID())) {
                 continue;
             }
-
             StringBuilder jewelInfo = new StringBuilder();
 
             for (var entry : item.getItems().entrySet()) {
@@ -264,39 +277,39 @@ public class MainFrameController {
         }
 
         for (var leaflet : leaflets) {
-            if (leaflet.getSituation() == 1) {
-                continue;
-            }
+            if (leaflet.isCompleted() && !completedLeaflets.contains(leaflet.getID())) {
 
-            if (leaflet.isCompleted()) {
                 try {
+                    System.out.println("tentou entregar");
+                    completedLeaflets.add(leaflet.getID());
                     creaturePoints.put(creature.getName(), creaturePoints.get(creature.getName()) + leaflet.getPayment());
+
+                    var points = creaturePoints.get(creature.getName());
                     creature.deliverLeaflet(leaflet.getID().toString());
                     leaflet.setSituation(1);
                     creature.updateLeaflet(leaflet.getID(), leaflet.getItems(), leaflet.getSituation());
                     creature = creature.updateState();
-
-                    int totalPayment = 0;
-                    for (var auxLeaflet : creature.getLeaflets()) {
-                        if (auxLeaflet.getSituation() == 1) {
-                            totalPayment += auxLeaflet.getPayment();
-                        }
+                    controlledCreature = creature = removeItensFromBag(leaflet, creature);
+                    if (byKeyboardFrame != null) {
+                        byKeyboardFrame.controlledCreature = controlledCreature;
                     }
+
                     if (controlledCreature.getName().equals(creature.getName())) {
-                        mainFrame.CreatureTotalPoints.setText(String.valueOf(totalPayment));
+                        mainFrame.CreatureTotalPoints.setText(String.valueOf(points));
                     }
 
-                    updateCreatureLeafletsList(creature);
+                    updateCreatureLeafletsList(controlledCreature);
+                    updateCreatureBagList(controlledCreature);
                 } catch (CommandExecException ex) {
                     Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }
+
     }
 
     public void updateCreatureBag(Creature creature, String color) {
         creature.updateBag();
-        creatureBag.put(creature.getName(), creature.getBag());
         var leaflets = creature.getLeaflets();
 
         if (leaflets != null) {
@@ -304,17 +317,26 @@ public class MainFrameController {
                 var itemsMap = leaflet.getItems();
 
                 if (itemsMap.containsKey(color)) {
-
                     Integer[] counts = itemsMap.get(color);
-                    if (counts[0] == counts[1]) {
-                        continue;
-                    }
-                    counts[1] += 1;
 
+                    // Verifica se o count já atingiu o limite
+                    if (counts[0] == counts[1]) {
+                        continue; // Pula para o próximo leaflet
+                    }
+
+                    System.out.println("Atualizando leaflet: " + leaflet.getID() + " para cor " + color);
+
+                    // Incrementa o count e atualiza o mapa
+                    counts[1] += 1;
                     itemsMap.put(color, counts);
+
+                    // Atualiza o leaflet no creature
+                    leaflet.setItems(itemsMap);
+                    creature.updateLeaflet(leaflet.getID(), leaflet.getItems(), leaflet.getSituation());
+
+                    // Sai do loop após incrementar o count
+                    break;
                 }
-                leaflet.setItems(itemsMap);
-                creature.updateLeaflet(leaflet.getID(), leaflet.getItems(), leaflet.getSituation());
             }
         }
 
@@ -326,7 +348,7 @@ public class MainFrameController {
         DefaultListModel<String> listModel = (DefaultListModel<String>) mainFrame.CreatureBagList.getModel();
         listModel.clear();
 
-        Bag bag = creatureBag.get(creature.getName());
+        Bag bag = creature.getBag();
 
         if (bag == null) {
             return;
@@ -557,5 +579,36 @@ public class MainFrameController {
         } while (!isPositionValid);
 
         return new double[]{x, y};
+    }
+
+    private Creature removeItensFromBag(Leaflet leaflet, Creature creature) {
+
+        Bag bag = creature.getBag();
+
+        var mapItems = leaflet.getItems();
+
+        Integer redCrystals = mapItems.containsKey("Red") ? mapItems.get("Red")[0] : 0;
+        Integer greenCrystals = mapItems.containsKey("Green") ? mapItems.get("Green")[0] : 0;
+        Integer blueCrystals = mapItems.containsKey("Blue") ? mapItems.get("Blue")[0] : 0;
+        Integer yellowCrystals = mapItems.containsKey("Yellow") ? mapItems.get("Yellow")[0] : 0;
+        Integer magentaCrystals = mapItems.containsKey("Magenta") ? mapItems.get("Magenta")[0] : 0;
+        Integer whiteCrystals = mapItems.containsKey("White") ? mapItems.get("White")[0] : 0;
+
+        List<Integer> list = new ArrayList<>();
+        list.add(bag.getNumberCrystalPerType(Constants.colorRED) - redCrystals);
+        list.add(bag.getNumberCrystalPerType(Constants.colorGREEN) - greenCrystals);
+        list.add(bag.getNumberCrystalPerType(Constants.colorBLUE) - blueCrystals);
+        list.add(bag.getNumberCrystalPerType(Constants.colorYELLOW) - yellowCrystals);
+        list.add(bag.getNumberCrystalPerType(Constants.colorMAGENTA) - magentaCrystals);
+        list.add(bag.getNumberCrystalPerType(Constants.colorWHITE) - whiteCrystals);
+
+        Integer totalDisc = redCrystals + greenCrystals + blueCrystals + yellowCrystals + magentaCrystals + whiteCrystals;
+
+        if (bag.getTotalNumberCrystals() > 0 && bag.getTotalNumberCrystals() != lastTotalCrystalsQuantity) {
+            bag.update(bag.getTotalNumberFood(), bag.getTotalNumberCrystals() - totalDisc, bag.getNumberPFood(), bag.getNumberNPFood(), list);
+            lastTotalCrystalsQuantity = bag.getTotalNumberCrystals();
+        }
+
+        return creature;
     }
 }
