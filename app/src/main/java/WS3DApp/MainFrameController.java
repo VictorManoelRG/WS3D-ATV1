@@ -30,16 +30,14 @@ import ws3dproxy.model.WorldPoint;
 public class MainFrameController {
 
     private static final double COLLECTION_DISTANCE_THRESHOLD_JEWEL = 20.0;
-    private static final double COLLECTION_DISTANCE_THRESHOLD_DELIVERY_SPOT = 65.0;
+    private static final double COLLECTION_DISTANCE_THRESHOLD_DELIVERY_SPOT = 75.0;
 
     private WS3DProxy proxy = new WS3DProxy();
     public Creature controlledCreature;
     private Map<String, String> creatureMap = new HashMap<>();
     private Set<Long> createdItems = new HashSet<>();
-    //private Map<String, List<Leaflet>> creatureLeaflets = new HashMap<>();
     private Map<String, Integer> creaturePoints = new HashMap<>();
     public World w;
-    private KeyEvent actualKey;
     private MainFrame mainFrame;
     private ControlCreatureByKeyboardFrame byKeyboardFrame;
     private Set<Long> completedLeaflets = new HashSet<>();
@@ -60,7 +58,7 @@ public class MainFrameController {
 
                 try {
                     controlledCreature = proxy.getCreature(id);
-                    Thread.sleep(2000);
+                    Thread.sleep(200);
                     updateCreatureLeafletsList(controlledCreature);
                     updateCreatureBagList(controlledCreature);
                     updateOtherCreatureInfos(controlledCreature);
@@ -76,9 +74,9 @@ public class MainFrameController {
             if (controlledCreature != null) {
                 try {
                     w = proxy.getWorld();
-                    Thread.sleep(1000);
+                    Thread.sleep(200);
                     var c = proxy.getCreature(creatureMap.get(mainFrame.CreatureList.getSelectedItem()));
-                    Thread.sleep(1000);
+                    Thread.sleep(200);
                     byKeyboardFrame = new ControlCreatureByKeyboardFrame(c, this, mainFrame.ListObservableThings, w);
                     byKeyboardFrame.addWindowListener(new WindowAdapter() {
                         @Override
@@ -188,13 +186,13 @@ public class MainFrameController {
                     case Constants.categoryPFOOD, Constants.categoryNPFOOD -> {
                         creature.eatIt(thingId);
                         creature = creature.updateState();
-                        Thread.sleep(500);
+                        Thread.sleep(200);
                     }
                     case Constants.categoryJEWEL -> {
                         collectedJewels.add(thingId); // Marca como coletada
                         creature.updateBag();
                         creature.putInSack(thingId);
-                        Thread.sleep(500);
+                        Thread.sleep(200);
                         creature.updateBag();
                         updateCreatureBag(controlledCreature, thing.getAttributes().getColor());
                     }
@@ -239,34 +237,45 @@ public class MainFrameController {
     }
 
     public void updateCreatureLeafletsList(Creature c) {
-        DefaultListModel<String> listModel = (DefaultListModel<String>) mainFrame.CreatureLeafletList.getModel();
-        listModel.clear();
+        try {
+            DefaultListModel<String> listModel = (DefaultListModel<String>) mainFrame.CreatureLeafletList.getModel();
+            listModel.clear();
 
-        List<Leaflet> leaflets = c.getLeaflets();
+            c = c.updateState();
+            Thread.sleep(500);
+            List<Leaflet> leaflets = c.getLeaflets();
 
-        if (leaflets == null) {
-            return;
-        }
-
-        for (var item : leaflets) {
-            if (completedLeaflets.contains(item.getID())) {
-                continue;
-            }
-            StringBuilder jewelInfo = new StringBuilder();
-
-            for (var entry : item.getItems().entrySet()) {
-                String jewelType = entry.getKey();
-                Integer[] valores = entry.getValue();
-                jewelInfo.append(" Tipo: ").append(jewelType)
-                        .append(" Meta: ").append(valores[0])
-                        .append(" Acumulados: ").append(valores[1])
-                        .append(" | ");
+            if (leaflets == null) {
+                return;
             }
 
-            listModel.addElement("Id: " + item.getID()
-                    + " Pagamento: " + item.getPayment()
-                    + " | " + jewelInfo.toString());
+            for (var item : leaflets) {
+                if (completedLeaflets.contains(item.getID())) {
+                    continue;
+                }
+
+                StringBuilder jewelInfo = new StringBuilder();
+
+                for (var entry : item.getItems().entrySet()) {
+                    String jewelType = entry.getKey();
+                    Integer[] valores = entry.getValue();
+                    jewelInfo.append(" Tipo: ").append(jewelType)
+                            .append(" Meta: ").append(valores[0])
+                            .append(" Acumulados: ").append(valores[1])
+                            .append(" | ");
+
+                }
+
+                String leafletInfo = "Id: " + item.getID()
+                        + " Pagamento: " + item.getPayment()
+                        + " | " + jewelInfo.toString();
+
+                listModel.addElement(leafletInfo);
+            }
+        } catch (InterruptedException ex) {
+            Logger.getLogger(MainFrameController.class.getName()).log(Level.SEVERE, null, ex);
         }
+
     }
 
     public void canDeliverLeaflet(Creature creature) {
@@ -276,6 +285,7 @@ public class MainFrameController {
             return;
         }
 
+        System.out.println("chegou pertto da entrega");
         for (var leaflet : leaflets) {
             if (leaflet.isCompleted() && !completedLeaflets.contains(leaflet.getID())) {
 
@@ -286,15 +296,17 @@ public class MainFrameController {
 
                     var points = creaturePoints.get(creature.getName());
                     creature.deliverLeaflet(leaflet.getID().toString());
+                    creature = creature.updateState();
                     leaflet.setSituation(1);
                     creature.updateLeaflet(leaflet.getID(), leaflet.getItems(), leaflet.getSituation());
                     creature = creature.updateState();
-                    controlledCreature = creature = removeItensFromBag(leaflet, creature);
+                    controlledCreature = creature; //removeItensFromBag(leaflet, creature);
                     if (byKeyboardFrame != null) {
                         byKeyboardFrame.controlledCreature = controlledCreature;
                     }
 
                     if (controlledCreature.getName().equals(creature.getName())) {
+                        System.out.println("points: " + points);
                         mainFrame.CreatureTotalPoints.setText(String.valueOf(points));
                     }
 
@@ -310,6 +322,7 @@ public class MainFrameController {
 
     public void updateCreatureBag(Creature creature, String color) {
         creature.updateBag();
+        //
         var leaflets = creature.getLeaflets();
 
         if (leaflets != null) {
@@ -324,7 +337,6 @@ public class MainFrameController {
                         continue; // Pula para o próximo leaflet
                     }
 
-                    System.out.println("Atualizando leaflet: " + leaflet.getID() + " para cor " + color);
 
                     // Incrementa o count e atualiza o mapa
                     counts[1] += 1;
@@ -335,19 +347,19 @@ public class MainFrameController {
                     creature.updateLeaflet(leaflet.getID(), leaflet.getItems(), leaflet.getSituation());
 
                     // Sai do loop após incrementar o count
-                    break;
                 }
             }
         }
-
         updateCreatureBagList(creature);
         updateCreatureLeafletsList(creature);
     }
 
     private void updateCreatureBagList(Creature creature) {
+
         DefaultListModel<String> listModel = (DefaultListModel<String>) mainFrame.CreatureBagList.getModel();
         listModel.clear();
 
+        creature = creature.updateState();
         Bag bag = creature.getBag();
 
         if (bag == null) {
@@ -374,7 +386,7 @@ public class MainFrameController {
 
         try {
             Creature c = proxy.getCreature(creatureID);
-            Thread.sleep(500);
+            Thread.sleep(200);
             HashMap<String, Integer[]> mapObjective = new HashMap<>();
 
             if (quantityRed > 0) {
