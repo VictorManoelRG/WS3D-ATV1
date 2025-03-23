@@ -43,6 +43,7 @@ public class MainFrameController {
     private Set<Long> completedLeaflets = new HashSet<>();
     private int lastTotalCrystalsQuantity = Integer.MIN_VALUE;
     private final Set<String> collectedJewels = new HashSet<>();
+    private Set<Long> addedUserLeaflet = new HashSet<>();
 
     public MainFrameController() {
         createWorld();
@@ -301,9 +302,9 @@ public class MainFrameController {
                     creature.updateLeaflet(leaflet.getID(), leaflet.getItems(), leaflet.getSituation());
                     creature = creature.updateState();
                     controlledCreature = creature; //removeItensFromBag(leaflet, creature);
-                    if (byKeyboardFrame != null) {
-                        byKeyboardFrame.controlledCreature = controlledCreature;
-                    }
+                        if (byKeyboardFrame != null) {
+                            byKeyboardFrame.controlledCreature = controlledCreature;
+                        }
 
                     if (controlledCreature.getName().equals(creature.getName())) {
                         System.out.println("points: " + points);
@@ -327,6 +328,9 @@ public class MainFrameController {
 
         if (leaflets != null) {
             for (var leaflet : leaflets) {
+                if (!addedUserLeaflet.contains(leaflet.getID())) {
+                    continue;
+                }
                 var itemsMap = leaflet.getItems();
 
                 if (itemsMap.containsKey(color)) {
@@ -336,7 +340,6 @@ public class MainFrameController {
                     if (counts[0] == counts[1]) {
                         continue; // Pula para o próximo leaflet
                     }
-
 
                     // Incrementa o count e atualiza o mapa
                     counts[1] += 1;
@@ -416,6 +419,8 @@ public class MainFrameController {
 
             Leaflet l = new Leaflet(leafletID, mapObjective, payment, 0);
             c.addLeaflet(l);
+            addedUserLeaflet.add(l.getID());
+            Thread.sleep(200);
 
             c = c.updateState();
             createCreatureLeafletMetaInRandomPositions(c.getLeaflets());
