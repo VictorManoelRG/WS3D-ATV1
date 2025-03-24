@@ -175,7 +175,6 @@ public class MainFrameController {
         if (isNearThing(creature, thing)) {
             String thingId = thing.getAttributes().getName();
 
-            // Se a criatura já coletou essa joia, não faz nada
             if (thing.getAttributes().getCategory() == Constants.categoryJEWEL && collectedJewels.contains(thingId)) {
                 return;
             }
@@ -190,7 +189,7 @@ public class MainFrameController {
                         Thread.sleep(200);
                     }
                     case Constants.categoryJEWEL -> {
-                        collectedJewels.add(thingId); // Marca como coletada
+                        collectedJewels.add(thingId);
                         creature.updateBag();
                         creature.putInSack(thingId);
                         Thread.sleep(200);
@@ -302,9 +301,9 @@ public class MainFrameController {
                     creature.updateLeaflet(leaflet.getID(), leaflet.getItems(), leaflet.getSituation());
                     creature = creature.updateState();
                     controlledCreature = creature; //removeItensFromBag(leaflet, creature);
-                        if (byKeyboardFrame != null) {
-                            byKeyboardFrame.controlledCreature = controlledCreature;
-                        }
+                    if (byKeyboardFrame != null) {
+                        byKeyboardFrame.controlledCreature = controlledCreature;
+                    }
 
                     if (controlledCreature.getName().equals(creature.getName())) {
                         System.out.println("points: " + points);
@@ -323,7 +322,7 @@ public class MainFrameController {
 
     public void updateCreatureBag(Creature creature, String color) {
         creature.updateBag();
-        //
+
         var leaflets = creature.getLeaflets();
 
         if (leaflets != null) {
@@ -336,20 +335,15 @@ public class MainFrameController {
                 if (itemsMap.containsKey(color)) {
                     Integer[] counts = itemsMap.get(color);
 
-                    // Verifica se o count já atingiu o limite
                     if (counts[0] == counts[1]) {
-                        continue; // Pula para o próximo leaflet
+                        continue;
                     }
 
-                    // Incrementa o count e atualiza o mapa
                     counts[1] += 1;
                     itemsMap.put(color, counts);
 
-                    // Atualiza o leaflet no creature
                     leaflet.setItems(itemsMap);
                     creature.updateLeaflet(leaflet.getID(), leaflet.getItems(), leaflet.getSituation());
-
-                    // Sai do loop após incrementar o count
                 }
             }
         }
